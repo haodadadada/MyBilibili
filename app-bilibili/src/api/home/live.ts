@@ -10,11 +10,12 @@ import type {
     LiveAnchorInfoReq,
     GetResponse
 } from './type';
-const getLiveRecommand = async (data: LiveRecommandReq, sessdata: string = ''): Promise<AxiosResponse<GetResponse>> => {
+const getLiveRecommand = async (data: LiveRecommandReq, sessdata: string = '', buvid3: string = ''): Promise<AxiosResponse<GetResponse>> => {
     return await get<GetResponse>({
         url: '/home/live/recommand',
         data,
         headers: {
+            buvid3,
             sessdata
         }
     });
@@ -33,11 +34,12 @@ const getLiveAreaList = async (): Promise<AxiosResponse<GetResponse>> => {
         url: '/home/live/area'
     });
 };
-const getLiveCategoryRecommand = async (data: LiveAreaRecommandReq, sessdata: string): Promise<AxiosResponse<GetResponse>> => {
+const getLiveCategoryRecommand = async (data: LiveAreaRecommandReq, sessdata: string, buvid3: string = ''): Promise<AxiosResponse<GetResponse>> => {
     return await get<GetResponse>({
         url: '/home/live/category/recommand',
         data,
         headers: {
+            buvid3,
             sessdata
         }
     });

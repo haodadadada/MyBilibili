@@ -23,12 +23,15 @@
 
 <script setup lang="ts">
     import { ref, onActivated, onDeactivated, nextTick } from 'vue';
+    import { useStore } from 'vuex';
     import { debounceSetContainerWidth } from '@/utils/container';
+    import { getBuvid } from '@/api/home';
     interface NavItem {
         path: string;
         name: string;
     };
     const emit = defineEmits(['changeSize', 'updateNav']);
+    const store = useStore();
     const containerRef = ref<HTMLElement | null>(null);
     const contentRef = ref<HTMLElement | null>(null);
     let navItems = ref([
@@ -88,7 +91,18 @@
         callback(isNew);
     };
 
-    onActivated(() => {
+    const getAndsaveBuvid = async () => {
+        const buvid3 = store.state.userModule.buvid3;
+        if(buvid3) {
+            return;
+        };
+        const response = await getBuvid();
+        console.log(response.data);
+        if(response.status === 200 && response.data.code === 0) {
+            store.commit('userModule/updateBuvid3', response.data.data.buvid);
+        };
+    };
+    onActivated(async () => {
         updateNavItems(navItems.value);
         window.addEventListener('resize', handleResize);
         window.electronAPI.sendMessage('check_internet', JSON.stringify({ windowId: 'video' }));
@@ -101,6 +115,7 @@
             await nextTick();
             handleResize(null, { isFirst: true });
         });
+        getAndsaveBuvid();
     });
     onDeactivated(() => {
         window.removeEventListener('resize', handleResize);

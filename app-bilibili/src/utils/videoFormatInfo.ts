@@ -53,7 +53,9 @@ const formatTime = (timestamp: number) => {
     const diffInDays = now.diff(targetDate, 'days');
     const diffInHours = now.diff(targetDate, 'hours');
     const diffInMinutes = now.diff(targetDate, 'minutes');
-    if(diffInDays >= 365) {
+
+    const diffDaysOfThisYear = now.diff(moment().startOf('year'), 'days');
+    if(diffInDays > diffDaysOfThisYear) {
         return targetDate.format('YYYY-MM-DD');
     }
     else if(diffInDays >= 2) {

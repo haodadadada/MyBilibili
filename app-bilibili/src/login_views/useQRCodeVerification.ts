@@ -6,7 +6,7 @@ import {
     getQRCode, 
     getQRCodePoll, 
 } from '../api/login';
-import showAlert from '@/utils/showAlert';
+import showMessage from '@/utils/showMessage';
 
 interface QRCodePollResponse {
     data: {
@@ -67,7 +67,7 @@ export default function useQRCodeVerification() {
                 return true;
             };
         } else if(result.data.data.code === 86038) {
-            showAlert('二维码已失效，请重新获取');
+            showMessage({ message: '二维码已失效，请重新获取' });
             return true;
         };
         return false;

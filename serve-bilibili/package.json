@@ -1,5 +1,5 @@
 {
-  "name": "serve-bilibili",
+  "name": "serve",
   "version": "0.0.0",
   "private": true,
   "scripts": {

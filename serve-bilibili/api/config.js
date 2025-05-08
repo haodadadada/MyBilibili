@@ -1,3 +1,5 @@
+// 获取buvid3
+const URL_BUVID3 = 'https://api.bilibili.com/x/web-frontend/getbuvid';
 // 登录
 const URL_LOGIN_QRCODE = 'https://passport.bilibili.com/x/passport-login/web/qrcode/generate';
 const URL_QRCODE_POLL = 'https://passport.bilibili.com/x/passport-login/web/qrcode/poll';
@@ -62,6 +64,7 @@ const URL_ROOM_INFO = 'https://api.live.bilibili.com/room/v1/Room/get_info';
 // 直播间主播信息
 const URL_ANCHOR_INFO = 'https://api.live.bilibili.com/live_user/v1/UserInfo/get_anchor_in_room';
 module.exports = {
+    URL_BUVID3,
     URL_LOGIN_QRCODE,
     URL_QRCODE_POLL,
     URL_LOGIN_CAPTCHA,

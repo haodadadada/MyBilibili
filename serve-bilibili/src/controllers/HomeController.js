@@ -6,6 +6,7 @@ const Request = require('../../api/request');
 // const fetchCookie = require('fetch-cookie').default;
 
 const { 
+    URL_BUVID3,
     URL_HOME_RECOMMAND,
     URL_HOME_VIDEO_PLAYER,
     URL_HOME_HOT_POPULAR,
@@ -546,14 +547,14 @@ class HomeController {
     };
     static async fetchLiveRecommand(req, res) {
         try {
-            const { sessdata } = req.headers;
+            const { buvid3, sessdata } = req.headers;
             const response = await Request.get({
                 url: URL_LIVE_RECOMMAND,
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                     'Referer': 'https://www.bilibili.com/',
                     'Origin': 'https://www.bilibili.com',
-                    'Cookie': sessdata ? `SESSDATA=${sessdata}` : ''
+                    'Cookie': sessdata ? `buvid3=${buvid3};SESSDATA=${sessdata}` : ''
                 },
                 data: req.query,
             });
@@ -579,14 +580,14 @@ class HomeController {
     };
     static async fetchLiveCategoryRecommand(req, res) {
         try {
-            const { sessdata } = req.headers;
+            const { buvid3, sessdata } = req.headers;
             const response = await Request.get({
                 url: URL_LIVE_CATEGORY_RECOMMAND,
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                     'Referer': 'https://www.bilibili.com/',
                     'Origin': 'https://www.bilibili.com',
-                    'Cookie': sessdata ? `SESSDATA=${sessdata}` : ''
+                    'Cookie': sessdata ? `buvid3=${buvid3};SESSDATA=${sessdata};buvid3=41F3173B-DEF5-A98D-3157-504B4C340CF073778infoc;` : ''
                 },
                 data: req.query,
             });
@@ -692,7 +693,6 @@ class HomeController {
             });
             response.data.pipe(res);
         } catch(error) {
-            console.log(error);
             res.status(500).send({
                 message: error.message || '服务器错误'
             });
@@ -967,5 +967,29 @@ class HomeController {
             });
         };
     };
+    static async fetchBuvid(req, res) {
+        const { sessdata } = req.headers;
+        const response = await Request.get({
+            url: URL_BUVID3,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Cookie': sessdata ? `SESSDATA=${sessdata}` : ''
+            }
+        });
+        const result = response.data;
+        if(result.code === 0) {
+            res.send({
+                ActionType: 'OK',
+                data: result.data,
+                code: result.code
+            });
+        }
+        else {
+            res.send({
+                message: result.message,
+                code: result.code
+            });
+        };
+    }
 };
 module.exports = HomeController;

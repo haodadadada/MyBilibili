@@ -94,7 +94,7 @@ export interface LiveRecommandReq {
     page: number,
     page_size: number,
     platform: string,
-    web_location: number,
+    web_location: number | string,
     wts: number,
     w_rid: string
 };
@@ -123,7 +123,7 @@ export interface LiveAreaRecommandReq {
     area_id: number,
     sort_type?: string,
     page: number,
-    web_location: number,
+    web_location: number | string,
     wts: number,
     w_rid: string
 };

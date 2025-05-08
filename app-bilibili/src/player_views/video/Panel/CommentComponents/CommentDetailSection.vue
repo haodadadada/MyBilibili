@@ -11,7 +11,11 @@
         <div class="line mr-10"></div>
         <div class="sub-reply-title text-[13px] mt-10">{{ rootComment ? rootComment.reply_control.sub_reply_title_text : ''}}</div>
 
-        <CommentItem :commentList="replyList" :isNeedShowReplies="false"></CommentItem>
+        <CommentItem 
+            :commentList="replyList" 
+            :isNeedShowReplies="false"
+            :upper="upper"
+        ></CommentItem>
         <div id="sentinel"></div>
         <div v-if="isEndDetail" class="nomore-comment text-center text-[13px]">没有更多评论</div>
     </section>
@@ -46,6 +50,7 @@
     let isEndDetail = ref(false);
     let rootComment = ref(null);
     let replyList = ref([]);
+    let upper = ref({});
     const fetchSecondReplyLazy = () => {
         let pn = 1;
         return async ({oid, rpid, type}) => {
@@ -54,11 +59,12 @@
             
             const successAction = R.pipe(
                 R.path(['data']),
-                R.tap(value => 
+                R.tap(info => 
                 {
-                    replyList.value = replyList.value ? [...replyList.value, ...value.replies] : value.replies;
-                    rootComment.value = value.root;
-                    if(Number(pn * value.page.size) > Number(value.page.count)) {
+                    replyList.value = replyList.value ? [...replyList.value, ...info.replies] : info.replies;
+                    upper.value = info.upper;
+                    rootComment.value = info.root;
+                    if(Number(pn * info.page.size) > Number(info.page.count)) {
                         isEndDetail.value = true;
                     };
                     pn++;
@@ -114,7 +120,7 @@
         await nextTick();
         if(detailIds.value) {
             updateLoadingDetailCommentState(true);
-            await fetchSecondReply({ oid: detailIds.value.oid, rpid: detailIds.value.rpid, type: 1 });
+            console.log(await fetchSecondReply({ oid: detailIds.value.oid, rpid: detailIds.value.rpid, type: 1 }));
             updateLoadingDetailCommentState(false);
             await observeBottom(() => fetchSecondReply({ oid: detailIds.value.oid, rpid: detailIds.value.rpid, type: 1 }));
         };

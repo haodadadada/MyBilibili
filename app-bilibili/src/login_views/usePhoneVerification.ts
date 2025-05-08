@@ -6,7 +6,7 @@ import * as R from 'ramda';
 import debounce from '@/utils/common/debounce';
 import { isPhone } from '@/utils/common/isPhone';
 import { getLoginCaptcha, getLoginSmsCaptchaKey, getLoginSms, getCountryList } from '@/api/login/index';
-import showAlert from '@/utils/showAlert';
+import showMessage from '@/utils/showMessage';
 
 interface Country {
     id: number;
@@ -64,7 +64,7 @@ export default function usePhoneVerification() {
   
     const fetchLoginCaptcha = async (): Promise<void> => {
         if (!isTrulyPhone.value) {
-            showAlert('手机号格式错误');
+            showMessage({ message: '手机号格式错误' });
             return;
         };
         if (isInCaptcha.value) {

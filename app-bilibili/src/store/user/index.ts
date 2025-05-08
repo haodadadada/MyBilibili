@@ -1,19 +1,3 @@
-interface UserInfo {
-    current_level?: number;
-    face?: string;
-    mid?: number;
-    uname?: string;
-}
-interface RootState {
-    userInfo?: UserInfo;
-    isLogin?: boolean;
-    isLight?: boolean;
-    sessdata?: string;
-    wbi_key?: {
-        img_key: string;
-        sub_key: string;
-    };
-}
 export default{
     namespaced: true,
     state: {
@@ -21,6 +5,7 @@ export default{
         isLogin: false,
         isLight: true,
         sessdata: '',
+        buvid3: '',
         wbi_key: {
             img_key: '',
             sub_key: ''
@@ -30,43 +15,41 @@ export default{
 
     },
     mutations: {
-        changeUserInfo(state: RootState, value: any) {
+        changeUserInfo(state, value) {
             state.userInfo = {
               ...state.userInfo,
               ...value
             };
         },
-        clearUserInfo(state: RootState) {
+        clearUserInfo(state) {
             state.userInfo = {};
         },
-        changeUserLoginState(state: RootState, value: any) {
+        changeUserLoginState(state, value) {
             state.isLogin = value;
         },
-        changeUserLight(state: RootState, value: any) {
+        changeUserLight(state, value) {
             state.isLight = value;
         },
-        updateSessdata(state: RootState, value: any) {
+        updateSessdata(state, value) {
             state.sessdata = value;
         },
-        clearSessdata(state: RootState) {
+        clearSessdata(state) {
             state.sessdata = '';
         },
-        updateWbiKey(state: RootState, value: any) {
+        updateWbiKey(state, value) {
             const { img_key, sub_key } = value;
-            if(state.wbi_key) {
-                state.wbi_key.img_key = img_key;
-            };
-            if(state.wbi_key) {
-                state.wbi_key.sub_key = sub_key;
-            };
+            state.wbi_key.img_key = img_key;
+            state.wbi_key.sub_key = sub_key;
         },
-        clearWbiKey(state: RootState) {
-            if(state.wbi_key) {
-                state.wbi_key.img_key = '';
-            };
-            if(state.wbi_key) {
-                state.wbi_key.sub_key = '';
-            };
+        clearWbiKey(state) {
+            state.wbi_key.img_key = '';
+            state.wbi_key.sub_key = '';
+        },
+        updateBuvid3(state, value) {
+            state.buvid3 = value;
+        },
+        clearBuvid3(state) {
+            state.buvid3 = '';
         }
     }
 };

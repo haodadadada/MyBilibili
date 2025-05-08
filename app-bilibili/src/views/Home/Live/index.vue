@@ -237,6 +237,7 @@ const emit = defineEmits(['checkIsNewLive', 'scrollToTop']);
 const route = useRoute();
 // Store 类型推断
 const store = useStore();
+const buvid3 = store.state.userModule.buvid3 || '';
 const sessdata = store.state.userModule.sessdata || '';
 // 定义常量和响应式数据
 let rcmdLiveRooms = ref<RcmdLiveItem[]>([]);
@@ -311,7 +312,9 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
     if(curParentId === 0) {
       const params = {
         platform: 'web',
-        web_location: 444.7,
+        web_location: '0.0',
+        page: page,
+        page_size: pageSize,
       };
       const wbi_key = store.state.userModule.wbi_key;
       const { img_key, sub_key } = wbi_key;
@@ -319,15 +322,15 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
       const newParams = new URLSearchParams(queryString);
       const paramsObj = Object.fromEntries(newParams.entries());
       const compeleteParams = {
-        page: page,
-        page_size: pageSize,
+        page: Number(paramsObj.page),
+        page_size: Number(paramsObj.page_size),
         platform: paramsObj.platform,
-        web_location: Number(paramsObj.web_location),
+        web_location: paramsObj.web_location,
         wts: Number(paramsObj.wts),
         w_rid: paramsObj.w_rid,
       };
 
-      const response = await getLiveRecommand(compeleteParams, sessdata);
+      const response = await getLiveRecommand(compeleteParams, sessdata, buvid3);
       const successAction = R.pipe(
         R.applySpec({
           hasMore: R.pathOr<number>(0, ['data', 'has_more']),
@@ -360,7 +363,7 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
     else {
       const params = {
         platform: 'web',
-        web_location: 444.43,
+        web_location: '0.0',
         parent_area_id: curParentId,
         area_id: curAreaId,
         page: page,
@@ -377,11 +380,11 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
         area_id: Number(paramsObj.area_id),
         page: Number(paramsObj.page),
         platform: paramsObj.platform,
-        web_location: Number(paramsObj.web_location),
+        web_location: paramsObj.web_location,
         wts: Number(paramsObj.wts),
         w_rid: paramsObj.w_rid,
       };
-      const response = await getLiveCategoryRecommand(compeleteParams, sessdata);
+      const response = await getLiveCategoryRecommand(compeleteParams, sessdata, buvid3);
       const successAction = R.pipe(
         R.applySpec({
           hasMore: R.pathOr<number>(0, ['data', 'has_more']),

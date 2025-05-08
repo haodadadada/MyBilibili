@@ -1,6 +1,6 @@
 // 拆分main.js 由于复杂类型数据传递是浅拷贝的形式所以通过传递函数参数的方式拆分
 // 拆分为app、ipc、win、webContents、tray模块
-import { app, BrowserWindow, globalShortcut, dialog } from 'electron';
+import { app, BrowserWindow, globalShortcut, dialog, Menu } from 'electron';
 import { fileURLToPath } from 'url';
 import * as R from 'ramda';
 import AppEvents from './main/appEvent.js';
@@ -167,7 +167,7 @@ let playerWindow = new Proxy(
 const playerWindowConfigure = (key) => {
   if(!key || typeof key != 'string' || !playerWindow.value[key]) return;
   // playerWindow.value[key].webContents.openDevTools();
-  playerWindow.value[key].webContents.on('render-process-gone', (_event, details) => {
+  playerWindow.value[key].webContents.on('render-process-gone', (e, details) => {
     const crashDetails = `崩溃原因: ${details.reason}, 退出码: ${details.exitCode}, 信号: ${details.signal}`;
     logger.error(`播放窗口进程崩溃: ${crashDetails}`);
     const options = {
@@ -360,7 +360,6 @@ const reloadWindow = (app) => {
   app.relaunch();
   app.exit(0);
 };
-
 
 // 不能对传递的参数重新赋值, 只能通过传递函数来赋值, 所有操作在主文件封装为函数后传递
 // 闭包无法获取引用的最新值, 需要通过传递代理proxy在另一模块使用

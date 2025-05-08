@@ -28,9 +28,17 @@ const handleResize = (parentEl?: ElementHandler, ratio: number | null = null) =>
     };
 };
 export default {
-    mounted(el: ElementHandler, binding: { value: {ratio: number} }) {
+    mounted(el: ElementHandler, binding: { value: { ratio: number } }) {
         const ratio = binding.value.ratio;
         const resizeHandler = handleResize(el, ratio);
+        el.resizeHandler = resizeHandler;
+        window.addEventListener('resize', resizeHandler);
+        resizeHandler();
+    },
+    updated(el: ElementHandler, binding: { value: { ratio: number } }) {
+        const ratio = binding.value.ratio;
+        const resizeHandler = handleResize(el, ratio);
+        window.removeEventListener('resize', el.resizeHandler);
         el.resizeHandler = resizeHandler;
         window.addEventListener('resize', resizeHandler);
         resizeHandler();

@@ -35,6 +35,8 @@ class HomeRouter {
         // this.router.get('/webapi/home/live/danmaku/package', HomeController.fetchLiveDanmakuPackage);
         this.router.get('/webapi/home/live/room/info', HomeController.fetchRoomInfo);
         this.router.get('/webapi/home/live/anchor/info', HomeController.fetchAnchorInfo);
+
+        this.router.get('/webapi/getbuvid', HomeController.fetchBuvid);
     };
     getRouter() {
         return this.router;

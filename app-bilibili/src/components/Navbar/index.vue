@@ -74,7 +74,7 @@
     let isFull = ref(false);
     function changeIsFull() {
         isFull.value = !isFull.value;
-    }
+    };
     const zoom = () => {
         window.electronAPI.sendMessage('app_exit', 0);
     };

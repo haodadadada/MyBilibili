@@ -64,11 +64,22 @@ const getDmList = async (data: DmListReq, sessdata?: string) => {
         responseType: 'arraybuffer'
     });
 };
+
+const getBuvid = async (sessdata: string = ''): Promise<AxiosResponse<GetResponse>> => {
+    return await get({
+        url: '/getbuvid',
+        headers: {
+            sessdata: sessdata || ''
+        }
+    });
+};
+
 export {
     getHomePlayUrl,
     getHomeVideoStream,
     getHomeVideoInfo,
     getHomeVideoShot,
     getHomeVideoRelated,
-    getDmList
+    getDmList,
+    getBuvid
 };

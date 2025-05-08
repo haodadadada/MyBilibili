@@ -1,8 +1,15 @@
 <template>
     <div class="player-content flex-center">
-        <div class="player-video-area flex-center" v-ratio="{ratio: 1.7}">
+        <div class="player-video-area flex-center" v-ratio="{ ratio: moreSettingOptions[1].curIndex === 1 ? 4 / 3 : 16 / 9 }">
             <div class="player-video-wrap flex-center">
-                <video crossorigin="anonymous" preload="auto" :src="videoInfo ? videoInfo.videoSrc : ''" ref="playerRef"></video>
+                <video 
+                    crossorigin="anonymous" 
+                    preload="auto" 
+                    :src="videoInfo ? videoInfo.videoSrc : ''" 
+                    ref="playerRef"
+                    :style="{ transform: playerSettingOptions[0].isOpen ? 'scaleX(-1)' : '', aspectRatio: moreSettingOptions[1].curIndex === 1 ? '4 / 3' : '16 / 9' }"
+                >
+                </video>
             </div>
             <div class="player-video-control" 
                 @click="handleControlClick"
@@ -321,7 +328,7 @@
                                         </svg>
                                         <!-- 弹幕设置弹出框 -->
                                         <transition name="opacity-fade">
-                                            <div class="setting-wrap" v-if="isShowSetting">
+                                            <div class="setting-wrap" v-if="isShowDanmakuSetting">
                                                 <div class="setting-show-wrap">
                                                     <span class="text-[12px] mr-5">显示区域</span>
                                                         <div class="setting-show-area" :style="{'--showArea': `${danmakuShowArea}%`}">
@@ -423,6 +430,49 @@
                                         </ul>
                                     </transition>
                                     <div class="player-ctrl-playbackrate-result" @click="handleSpeedClick">{{ getpPlaybackrateResult(curSpeed) }}</div>
+                                </div>
+                                <!-- 设置 -->
+                                <div class="player-ctrl-setting player-ctrl-btn" @mouseenter="handlePlayerSettingMouseEnter" @mouseleave="handlePlayerSettingMouseLeave">
+                                    <transition name="opacity-fade">
+                                        <div 
+                                            class="player-ctrl-setting-box flex-column" 
+                                            :class="{'player-ctrl-setting-more': isShowMoreSetting}"
+                                            v-if="isShowPlayerSetting"
+                                        >
+                                            <div v-if="!isShowMoreSetting" class="text-[12px] font-[600]">
+                                                <div
+                                                    v-for="item of playerSettingOptions" :key="item.id" 
+                                                    class="setting-option flex items-centermb-5">
+                                                    <span class="flex-shrink-0 mr-10">{{ item.name }}</span>
+                                                    <el-switch 
+                                                        v-bind:model-value="item.isOpen" 
+                                                        :width="25"
+                                                        size="small"
+                                                        style="--el-switch-on-color: var(--brand-pink); --el-switch-off-color: grey;"
+                                                        @change="handleUpdateCommonSetting(item.id)"
+                                                    />
+                                                </div>
+                                                <div class="flex justify-between" @click="handleMoreSettingClick">
+                                                    <span>更多播放设置</span>
+                                                    <span>></span>
+                                                </div>
+                                            </div>
+                                            <div v-if="isShowMoreSetting" class="text-[12px] font-[600]">
+                                                <div v-for="item of moreSettingOptions" :key="item.id" class="mb-5">
+                                                    <div>{{ item.name }}</div>
+                                                    <div class="flex">
+                                                        <span
+                                                            v-for="(optionName, index) of item.option" :key="index"
+                                                            :class="{ 'mr-10': index !== item.option.length - 1, 'more-setting-option-active': index === item.curIndex }"
+                                                            class="more-setting-option flex-1"
+                                                            @click="handleUpdateOtherSetting(item.id, index)"
+                                                        >{{ optionName }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </transition>
+                                    <component :is="settingIcon" class="player-ctrl-common-svg player-ctrl-setting-svg" ></component>
                                 </div>
                                 <!-- 字幕 -->
                                 <div class="player-ctrl-subtitle player-ctrl-btn" v-if="!isSmallWindow">
@@ -614,8 +664,9 @@
                                         </svg>
                                     </div>
                                 </div>
+              
                                 <!-- 音量 -->
-                                <div class="player-ctrl-volume player-ctrl-btn" @mouseover="handleVolumesMouseOver" @mouseleave="handleVolumesMouseLeave">
+                                <div class="player-ctrl-volume player-ctrl-btn" @mouseenter="handleVolumesMouseEnter" @mouseleave="handleVolumesMouseLeave">
                                     <transition name="opacity-fade">
                                         <div class="player-ctrl-volume-box flex-column" :style="{'--volume': `${curVideoVolume}%`}" v-if="isShowVolume">
                                             <div class="player-ctrl-volume-box-area">
@@ -764,6 +815,7 @@
     import { computed, ref, Ref, inject, watch, onMounted, onUnmounted, nextTick } from 'vue';
     import { useStore } from 'vuex';
     import * as R from 'ramda';
+    import { useAudioBalancer } from './useAudioBalancer';
     import debounce from '@/utils/common/debounce';
     import fetchVideoStream from '@/utils/videoStreamSingle';
     import { getHomePlayUrl, getHomeVideoShot } from '@/api/home';
@@ -773,6 +825,7 @@
     import Danmuku from '@/player_views/video/Danmuku/index.vue';
     import playIcon from '@/assets/player/play.svg';
     import rightIcon from '@/assets/icon/common/right.svg';
+    import settingIcon from '@/assets/icon/player/setting.svg';
 
     interface DanmakuElement extends HTMLElement {
         resetCurIndex: (curPlayerTime: number) => void,
@@ -848,7 +901,8 @@
             view: number
         },
         title: string,
-        videoSrc?: string
+        videoSrc?: string,
+        mediaSource?: MediaSource
     }
     
     const props = defineProps(['windowMode']);
@@ -861,22 +915,32 @@
     let stopVideo: ((playVideo?: {cancel: () => void}) => void) | null = null;
     let jumpVideo: ((time: number) => Promise<void>) | null = null;
     let startVideo: (() => Promise<void>) | null = null;
-    let playerRef = ref<HTMLMediaElement | null>(null);
+    let playerRef = ref<HTMLVideoElement | null>(null);
 
     const keepInfoAndPlayVideo = async (videoInfo: Ref<VideoInfoItem>, qualityOptionId = 32) => {
         const videosStreamInfo = await fetchHomeRcmdPlayUrl(videoInfo.value, sessdata);
         if(!videosStreamInfo) return null;
         const { videoOptions, audioOptions }: { videoOptions: StreamInfo[], audioOptions: StreamInfo[] } = videosStreamInfo;
-        console.log(videoOptions, audioOptions);
         // ramda对于迭代的函数泛型, 第一个是参数类型第二个是迭代函数返回的类型
         const ids: number[] = R.map<StreamInfo, number>(R.prop('id'))(videoOptions);
         qualityOptional.value = R.filter((item: QualityOptionItem) => R.includes(item.id)(ids))(qualityOptions.value);
         const video = R.filter(R.propEq(qualityOptionId, 'id'))(videoOptions);
+        const sortedVideo = (() => {
+            if(store.state.playerModule.otherSetting[2].curIndex === 0) return video;
+            
+            const optionItem = store.state.playerModule.otherSetting[2];
+            const index = optionItem.curIndex;
+            const optionName = optionItem.option[index];
+            const codecid = store.state.playerModule.videoCodecid[optionName];
+            return R.sort(
+                (a: StreamInfo, b: StreamInfo) => (b.codecid === codecid ? 1 : 0) - (a.codecid === codecid ? 1 : 0)
+            )(video);
+        })();
         const audio = R.filter(R.propEq(30216, 'id'))(audioOptions);
         if(!playerRef.value) return null;
         return async (currentTime = 0) => {
             return await fetchVideoStream(
-                video, 
+                sortedVideo, 
                 videoInfo.value, 
                 playerRef as Ref<HTMLMediaElement>, 
                 videoBlobUrls, 
@@ -1305,7 +1369,8 @@
         };
         isShowVolume.value = volumeState;
     };
-    const handleVolumesMouseOver = () => {
+    const handleVolumesMouseEnter = () => {
+        hideControlPopupBar();
         updateShowVolumeState(true);
     };
     const handleVolumesMouseLeave = () => {
@@ -1314,6 +1379,52 @@
         }, 200);
     };
     
+    // 播放器设置
+    let playerSettingOptions = computed(() => store.state.playerModule.commonSetting);
+    let moreSettingOptions = computed(() => store.state.playerModule.otherSetting);
+    let isShowMoreSetting = ref(false);
+    const updateMoreSettingState = (settingState: boolean) => {
+        isShowMoreSetting.value = settingState;
+    };
+    let isShowPlayerSetting = ref(false);
+    let hidePlayerSettingTimer: ReturnType<typeof setTimeout> | null = null;
+    const updatePlayerSettingState = (settingState: boolean) => {
+        if(settingState && hidePlayerSettingTimer) {
+            clearTimeout(hidePlayerSettingTimer);
+            hidePlayerSettingTimer = null;
+        };
+        isShowPlayerSetting.value = settingState;
+    };
+    const handlePlayerSettingMouseEnter = () => {
+        hideControlPopupBar();
+        updatePlayerSettingState(true);
+    };
+    const handlePlayerSettingMouseLeave = () => {
+        hidePlayerSettingTimer = setTimeout(() => {
+            updatePlayerSettingState(false);
+            updateMoreSettingState(false);
+        }, 200);
+    };
+
+    const handleUpdateCommonSetting = (id: number) => {
+        store.commit('playerModule/updateCommonSetting', { id });
+    };
+    const audioMode = ref<'off' | 'balance' | 'detail'>('off');
+    const handleUpdateOtherSetting = (id: number, index: number) => {
+        store.commit('playerModule/updateOtherSetting', { id, index });
+        if(id.toString() == '3' && playerRef.value) {
+            audioMode.value = (() => {
+                if(index === 0) return 'balance';
+                if(index === 1) return 'detail';
+                return 'off';
+            })();
+        }
+    };
+
+    const handleMoreSettingClick = () => {
+        updateMoreSettingState(true);
+    };
+
     // 控制倍速
     const speedOption = [{speed: '0.5'}, {speed: '0.75'}, {speed: '1.0'}, {speed: '1.25'}, {speed: '1.5'}, {speed: '2.0'}];
     let curSpeed = ref('1.0');
@@ -1353,7 +1464,7 @@
     const getpPlaybackrateResult = (speed: number | string) => {
         return speed === '1.0' ? '倍速' : `${speed}x`;
     };
-
+ 
     // 控制清晰度
     let isShowQuality = ref(false);
     let curQuality = ref<number>(32);
@@ -1416,7 +1527,7 @@
         updateShowQualityState(false);
         await switchQuality(quailtyId);
     };
-
+ 
     // 控制弹幕显示
     // 弹幕组件
     const danmakuRef = ref<DanmakuElement | null>(null);
@@ -1439,13 +1550,13 @@
         updateDanmakuState(!isDanmakuClosed.value);
     };
 
-    let isShowSetting = ref(false);
+    let isShowDanmakuSetting = ref(false);
     const updateShowSettingState = (settingState: boolean) => {
-        isShowSetting.value = settingState;
+        isShowDanmakuSetting.value = settingState;
     };
 
     const handleClickDanmakuSettingBtn = () => {
-        updateShowSettingState(!isShowSetting.value);
+        updateShowSettingState(!isShowDanmakuSetting.value);
     };
 
     // 弹幕设置
@@ -1485,6 +1596,7 @@
         updateShowSpeedState(false);
         updateShowQualityState(false);
         updateShowSettingState(false);
+        updatePlayerSettingState(false);
     };
 
     const isBuffered = (time: number): boolean => {
@@ -1615,7 +1727,7 @@
     onMounted(async () => {
         updatePlayerSpeed(curSpeed.value);
         updatePlayerVolume(curVideoVolume.value);
-
+        useAudioBalancer(playerRef, audioMode);
         await nextTick();
         if(danmakuRef.value) {
             resetDanmakuCurIndex = danmakuRef.value.resetCurIndex;
@@ -1629,6 +1741,7 @@
         videoBlobUrls.value.forEach(url => {
             URL.revokeObjectURL(url);
         });
+        if(videoInfo.value?.mediaSource?.readyState  === 'open') videoInfo.value?.mediaSource?.endOfStream();
         if(playerRef.value) {
             playerRef.value.removeEventListener('timeupdate', handlePlayerTimeUpdate);
             playerRef.value.removeEventListener('progress', handlePlayerProcess);
@@ -1653,6 +1766,7 @@
 </script>
 
 <style lang="scss" scoped>
+    @use "sass:math";
     $sideDistance: 12px;
     $processBarHeight: 4px;
     $processBarAreaHeight: 16px;
@@ -1682,7 +1796,7 @@
                     max-width: 100%;
                     max-height: 100%;
                     background-color: #000;
-                    object-fit: contain;
+                    object-fit: fill;
                     overflow-clip-margin: content-box;
                     overflow: clip;
                 }
@@ -2113,6 +2227,55 @@
                                 .player-ctrl-playbackrate-result {
                                     cursor: pointer;
                                     width: 100%;
+                                }
+                            }
+                            .player-ctrl-setting {
+                                $settingWidth: 109px;
+                                $moreSettingWidth: 300px;
+                                position: relative;
+                                .player-ctrl-setting-svg {
+                                    width: 100%;
+                                    height: 100%;
+                                    transition: .5s;
+                                }
+                                .player-ctrl-setting-svg:hover {
+                                    transform: rotate(90deg);
+                                }
+                                .player-ctrl-setting-box {
+                                    position: absolute;
+                                    left: 50%;
+                                    bottom: 50px;
+                                    transform: translateX(calc(-100% + (math.div($settingWidth, 2))));
+                                    width: $settingWidth;
+                                    padding: 10px;
+                                    box-sizing: border-box;
+                                    background: hsla(0, 0%, 8%, .9);
+                                    border-radius: 2px;
+                                    transition: .2s;
+                                    .setting-option {
+                                        transition: .2s;
+                                        &:hover {
+                                            color: var(--brand-pink, #FF6699);
+                                        }
+                                    }
+                                }
+                                .player-ctrl-setting-more {
+                                    width: $moreSettingWidth;
+                                    padding: 20px;
+                                    text-align: start;
+                                    box-sizing: border-box;
+                                    .more-setting-option {
+                                        background-color: #808080;
+                                        border-radius: 3px;
+                                        text-align: center;
+                                        padding: 2px 0;
+                                        &:not(.more-setting-option-active):hover {
+                                            background-color: lighten($color: #808080, $amount: 10);
+                                        }
+                                    }
+                                    .more-setting-option-active {
+                                        background-color: var(--brand-pink, #FF6699);
+                                    }
                                 }
                             }
                             .player-ctrl-volume {

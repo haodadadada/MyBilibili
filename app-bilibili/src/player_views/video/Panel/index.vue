@@ -136,7 +136,6 @@
 $lineWidth: 20px;
 $tabHeight: 40px;
 .container-panel {
-    user-select: text;
     width: 380px;
     height: 100%;
     background-color: var(--Ga10);
