@@ -118,10 +118,10 @@
 </template>
 
 <script setup lang="ts">
-    import { ref, onMounted, nextTick, computed, onDeactivated, onActivated } from 'vue';
-    import { useStore } from 'vuex';
+    import { ref, onMounted, nextTick, onDeactivated, onActivated } from 'vue';
     import { useRoute } from 'vue-router';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import debounce from '@/utils/common/debounce';
     import encWbi from '@/utils/wrid';
     import {
@@ -204,10 +204,8 @@
 
     const emit = defineEmits(['checkIsNewVideo']);
     const route = useRoute();
-
-    const store = useStore();
-    const isLight = computed(() => store.state.userModule.isLight);
-    const sessdata: string = store.state.userModule.sessdata;
+    const { userStore } = useStores();
+    const { isLight, sessdata, wbi_key } = userStore;
 
     const isLoading = ref<boolean>(true);
     const curMouseIndex = ref<number>(-1);
@@ -244,7 +242,6 @@
     const fetchSeriesOne = async (number: number = 1, sessdata: string = ''): Promise<void> => {
         if (R.equals(number, seriesPeriodNth.value)) return;
 
-        const wbi_key = store.state.userModule.wbi_key;
         const { img_key, sub_key } = wbi_key;
         const params = { number, web_location: 333.934 };
         const queryString = encWbi(params, img_key, sub_key);

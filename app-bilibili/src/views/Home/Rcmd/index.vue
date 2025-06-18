@@ -1,5 +1,6 @@
 <template>
     <div class="container-rcmd">
+        <span @click="handleClickMessageBtn({ message: 'this is the message' })">弹框</span>
         <div class="content-rcmd">
             <div class="content-wrap" v-if="rcmdVideos.length > 0">
                 <div v-for="(item, index) in rcmdVideos" :key="item.id" class="box-card" @click="handleClickVideo(item, index)" v-skeleton>
@@ -111,14 +112,15 @@
 <script setup lang="ts">
     import { ref, nextTick, onActivated, onDeactivated } from 'vue';
     import { useRoute } from 'vue-router';
-    import { useStore } from 'vuex';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import { getHomeRecommand } from '@/api/home/rcmd';
     import { getHomePlayUrl } from '@/api/home';
     import fetchVideoStream from '@/utils/videoStreamPreview';
     import stopPreview from '@/utils/stopPreview';
     import debounce from '@/utils/common/debounce';
     import observeLastEle from '@/utils/observer';
+    import showMessage from '@/utils/showMessage';
     import {
         formatView,
         formatSeconds,
@@ -177,11 +179,15 @@
         width: number;
     }
 
+    const handleClickMessageBtn = ({ message }: { message: string }): void => {
+        showMessage({ message });
+    };
+    
+
     const emit = defineEmits(['checkIsNewVideo', 'scrollToTop']);
     const route = useRoute();
-    // Store 类型推断
-    const store = useStore();
-    const sessdata = store.state.userModule.sessdata || '';
+    const { userStore } = useStores();
+    const { sessdata = '' } = userStore;
 
     // 定义常量和响应式数据
     const pageCount = 20;

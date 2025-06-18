@@ -13,6 +13,7 @@ module.exports = {
 		{ value: 'style', name: 'style:    样式修改不影响逻辑' },
 		{ value: 'revert', name: 'revert:   版本回退' },
 		{ value: 'add', name: 'add:      添加依赖' },
+		{ value: 'minus', name: 'minus:    版本回退' },
 		{ value: 'del', name: 'del:      删除代码/文件' }
 	],
 	scopes: [

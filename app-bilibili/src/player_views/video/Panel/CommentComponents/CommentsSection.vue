@@ -28,8 +28,8 @@
 
 <script setup>
     import { ref, reactive, onActivated, nextTick, onDeactivated, computed, inject, watch } from 'vue';
-    import { useStore } from 'vuex';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import CommentItem from './CommentItem.vue';
     import { getMainReply, getPermissionsReply } from '@/api/comment/index';
     import encWbi from '@/utils/wrid';
@@ -41,8 +41,8 @@
     const emit = defineEmits(['updateDetailCommentState', 'updateDetailIds']);
     const updateDetailCommentState = flag => emit('updateDetailCommentState', flag);
     const updateDetailIds = ids => emit('updateDetailIds', ids);
-    const store = useStore();
-    const sessdata = store.state.userModule.sessdata || null;
+    const { userStore } = useStores();
+    const { sessdata, wbi_key } = userStore;
     
     // 是否正在请求主评论
     let isLoadingComments = ref(false);
@@ -90,7 +90,6 @@
                     isLoading = true;
                     const mode = catBtnIndex.value === 0 ? 3 : 2;
                     const paginationType = catBtnIndex.value === 0 ? 1 : 3;
-                    const wbi_key = store.state.userModule.wbi_key;
                     const { img_key, sub_key } = wbi_key;
                     const params = { type, oid, mode, plat, web_location, pagination_str: pagination_str.value };
                     const queryString = encWbi(params, img_key, sub_key);

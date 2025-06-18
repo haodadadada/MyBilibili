@@ -131,8 +131,8 @@
 <script setup lang="ts">
     import { ref, onMounted, onDeactivated, computed } from 'vue';
     import { useRoute } from 'vue-router';
-    import { useStore } from 'vuex';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import debounce from '@/utils/common/debounce';
     import encWbi from '@/utils/wrid';
     import fetchVideoStream from '@/utils/videoStreamPreview';
@@ -200,9 +200,8 @@
 
     const emit = defineEmits(['checkIsNewVideo']);
     const route = useRoute();
-
-    const store = useStore();
-    const sessdata: string = store.state.userModule.sessdata;
+    const { userStore } = useStores();
+    const { sessdata, wbi_key } = userStore;
     let isLoading = ref<boolean>(true);
     let isDrama = computed(() => {
         return 'season_type' in rankTabs[activeTab.value.index];
@@ -230,7 +229,6 @@
     let videoBlobUrls = ref<string[]>([]);
     let videoRefs = ref<HTMLVideoElement[]>([]);
     const fetchHomeRankList = async (tid: number, sessdata: string = ''): Promise<void> => {
-        const wbi_key = store.state.userModule.wbi_key;
         const { img_key, sub_key } = wbi_key;
         const params = { rid: tid, type: 'all', web_location: 333.934 };
         const queryString = encWbi(params, img_key, sub_key);
@@ -266,7 +264,6 @@
     };
 
     const fetchHomePgcRankList = async (season_type: number, sessdata: string = '') => {
-        const wbi_key = store.state.userModule.wbi_key;
         const { img_key, sub_key } = wbi_key;
         const params = { season_type, day: 3, web_location: 333.934 };
         const queryString = encWbi(params, img_key, sub_key);

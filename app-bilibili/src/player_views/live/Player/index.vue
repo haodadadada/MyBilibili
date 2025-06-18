@@ -464,9 +464,9 @@
 
 <script setup lang="ts">
     import { computed, ComputedRef, ref, Ref, inject, watch, onMounted, onUnmounted, nextTick } from 'vue';
-    import { useStore } from 'vuex';
     import Hls from 'hls.js';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import debounce from '@/utils/common/debounce';
     import { getLiveStreamUrl, getLiveRoomInfo, getLiveAnchorInfo } from '@/api/home/live';
     import Danmaku from '../Danmaku/index.vue';
@@ -527,8 +527,8 @@
 
     const props = defineProps(['danmakuScrollList', 'roomMsg']);
     const emit = defineEmits(['clearDanmakuScrollList', 'updatePanelState']);
-    const store = useStore();
-    const sessdata = store.state.userModule.sessdata || '';
+    const { userStore } = useStores();
+    const { sessdata } = userStore;
     const roomMsg: ComputedRef<{ watcherCount?: string, likeCount?: number }> = computed(() => props.roomMsg);
     const danmakuScrollList: ComputedRef<DanmakuItem[]> = computed(() => props.danmakuScrollList);
     const clearDanmakuScrollList = (list: DanmakuItem[], index: number) => emit('clearDanmakuScrollList', list, index);

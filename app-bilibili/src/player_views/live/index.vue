@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
     import { computed, ref, onUnmounted, provide, watch } from 'vue';
-    import { useStore } from 'vuex';
+    import useStores  from '@/stores/index';
     import encWbi from '@/utils/wrid';
     import { getLiveDanmakuUrl } from '@/api/home/live';
     import Navbar from '@/player_components/Navbar/index.vue';
@@ -50,9 +50,9 @@
         honor_icon: string;
         id: number;
     }
-    const store = useStore();
-    const sessdata = store.state.userModule.sessdata || '';
-    const userId = store.state.userModule.userInfo.mid || 0;
+    const { userStore } = useStores();
+    const { sessdata, userInfo, wbi_key } = userStore;
+    const userId = userInfo.mid || 0;
     let liveInfo = ref<{ roomid?: number }>({});
     provide('liveInfo', liveInfo);
     window.electronAPI.send('did-child-finish-load');
@@ -66,7 +66,6 @@
             console.error('房间号为空');
             return;
         };
-        const wbi_key = store.state.userModule.wbi_key;
         const { img_key, sub_key } = wbi_key;
         const params = { id: roomid };
         const queryString = encWbi(params, img_key, sub_key);

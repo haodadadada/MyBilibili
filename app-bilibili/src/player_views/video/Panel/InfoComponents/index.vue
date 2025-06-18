@@ -285,9 +285,9 @@
 
 <script setup lang="ts">
     import { inject, watch, ref, Ref, computed, onUnmounted } from 'vue';
-    import { useStore } from 'vuex';
     import moment from 'moment';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import debounce from '@/utils/common/debounce';
     import fetchVideoStream from '@/utils/videoStreamPreview';
     import { getHomePlayUrl } from '@/api/home';
@@ -352,8 +352,8 @@
         width: number;
     }
 
-    const store = useStore();
-    const sessdata = store.state.userModule.sessdata;
+    const { userStore } = useStores();
+    const { sessdata } = userStore;
     defineOptions({
         name: 'InfoComponents'
     });

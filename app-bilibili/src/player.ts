@@ -1,7 +1,8 @@
 import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 import PlayerApp from './player_views/index.vue';
 import router from './player_router/index';
-import store from './store/index';
 import 'element-plus/dist/index.css';
 import '@/common/css/index/index.scss';
 import '@/common/css/font/font.css';
@@ -18,4 +19,6 @@ app.directive('ratio', {
 app.directive('lazyload', {
     ...lazyload
 });
-app.use(router).use(store).mount('#player');
+const pinia: any = createPinia();
+pinia.use(piniaPluginPersistedstate);
+app.use(pinia).use(router).mount('#player');

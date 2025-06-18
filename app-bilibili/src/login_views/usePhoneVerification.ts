@@ -1,8 +1,8 @@
 import { ref, computed, watch, onUnmounted } from 'vue';
-import { useStore } from 'vuex';
 import { AxiosResponse } from 'axios';
 import { ElMessage } from 'element-plus';
 import * as R from 'ramda';
+import useStores from '@/stores/index';
 import debounce from '@/utils/common/debounce';
 import { isPhone } from '@/utils/common/isPhone';
 import { getLoginCaptcha, getLoginSmsCaptchaKey, getLoginSms, getCountryList } from '@/api/login/index';
@@ -27,7 +27,8 @@ interface CaptchaResponse {
 };
   
 export default function usePhoneVerification() {
-    const store = useStore();
+    const { userStore } = useStores();
+    const { updateSessdata } = userStore;
     const countryList = ref<CountryList | null>(null);
     const countrySelect = ref<number>(1);
     
@@ -162,7 +163,7 @@ export default function usePhoneVerification() {
         });
         shortMessageCode.value = '';
         if (response.data.code == 0) {
-            store.commit('userModule/updateSessdata', response.data.sessdata);
+            updateSessdata(response.data.sessdata);
             telPhone.value = '';
             window.electronAPI.sendMessage('vuex_update_from_login', JSON.stringify({ sessdata: response.data.sessdata, windowId: 'video' }));
             window.electronAPI.sendMessage('login_exit');

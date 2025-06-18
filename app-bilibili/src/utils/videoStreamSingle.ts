@@ -76,14 +76,23 @@ interface VideoControls {
  * @param sessdata cookie
  * @returns {stop, jump, start} 返回控制函数来实现暂停, 跳转, 播放
  */
-export default async (
-        videosStreamInfo: StreamInfo[], 
-        videoItem: Record<string, any>, 
-        videoRef: Ref<HTMLMediaElement>, 
-        videoBlobUrls: Ref<string[]>, 
-        audioStreamInfo : StreamInfo | null = null,
-        sessdata?: string,
-        currentTime: number = 0
+export default async ({
+            videosStreamInfo, 
+            videoItem, 
+            videoRef, 
+            videoBlobUrls, 
+            audioStreamInfo = null,
+            sessdata,
+            currentTime = 0
+        }: {
+            videosStreamInfo: StreamInfo[], 
+            videoItem: Record<string, any>,
+            videoRef: Ref<HTMLMediaElement>, 
+            videoBlobUrls: Ref<string[]>, 
+            audioStreamInfo : StreamInfo | null,
+            sessdata?: string,
+            currentTime: number
+        }
     ): Promise<VideoControls | null> =>  {
     try {
         // 标志视频起始和结束时间
@@ -175,12 +184,16 @@ export default async (
                                     };
                                 };
                                 if(isLoading === true) return;
-                                isLoading = true;
-                                await Promise.all([
-                                    loadChunk(videoItem.videoSourceBuffer, videoStreamUrl, videoLastSegments, 'video'),
-                                    audioLastSegments ? loadChunk(videoItem.audioSourceBuffer, audioStreamUrl, audioLastSegments, 'audio') : Promise.resolve()
-                                ]);
-                                isLoading = false;
+                                try {
+                                    isLoading = true;
+                                    await Promise.all([
+                                        loadChunk(videoItem.videoSourceBuffer, videoStreamUrl, videoLastSegments, 'video'),
+                                        audioLastSegments ? loadChunk(videoItem.audioSourceBuffer, audioStreamUrl, audioLastSegments, 'audio') : Promise.resolve()
+                                    ]);
+                                } finally {
+                                    // 确保在请求出错或完成后重置标志位
+                                    isLoading = false;
+                                };
                             }, 1000);
                             await Promise.all([
                                 loadChunk(videoItem.videoSourceBuffer, videoStreamUrl, videoLastSegments, 'video'),

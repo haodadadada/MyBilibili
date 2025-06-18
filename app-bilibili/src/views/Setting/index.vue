@@ -1,10 +1,17 @@
 <template>
     <div class="container">
         <header class="owner flex-start" v-if="isLogin">
-            <img :src="userInfo.face || ''" alt="" class="avatar">
+            <img 
+                v-if="'face' in userInfo && userInfo.face"
+                :src="(userInfo.face as string) || ''" 
+                alt="" 
+                class="avatar">
             <div class="right flex-column-between">
                 <div class="user flex-start">
-                    <span class="text-[16px] weight-6 mr-5">{{ userInfo.uname || '' }}</span>
+                    <span 
+                        v-if="'uname' in userInfo && userInfo.uname"
+                        class="text-[16px] weight-6 mr-5"
+                    >{{ userInfo.uname || '' }}</span>
                     <div v-if="levelIcon">
                         <component :is="levelIcon" class="level-icon"></component>
                     </div>
@@ -91,8 +98,9 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, ref, onActivated, markRaw, onDeactivated } from 'vue';
-    import { useStore } from 'vuex';
+    import { ref, onActivated, markRaw, onDeactivated } from 'vue';
+    import { storeToRefs } from 'pinia';
+    import useStores from '@/stores/index';
     import exitLoginIcon from '@/assets/icon/common/exit_login.svg';
 
     interface NavItem {
@@ -122,10 +130,12 @@
         download: DownloadConfig
     }
 
-    const store = useStore();
+    const { userStore } = useStores();
+
     const emit = defineEmits(['updateNav']);
-    const userInfo = computed(() => store.state.userModule.userInfo);
-    const isLogin = computed(() => store.state.userModule.isLogin || false);
+    const { userInfo } = storeToRefs(userStore);
+    
+    const { isLogin, clearSessdata, updateUserLoginState } = userStore;
     const navItems = ref<NavItem[]>([{
         name: '设置'
     }]);
@@ -144,7 +154,7 @@
     ];
     let levelIcon = ref(null);
     if('current_level' in userInfo.value) {
-        const module = images[levelIconsPath[userInfo.value.current_level]];
+        const module = images[levelIconsPath[userInfo.value.current_level as number]];
         // markRaw不需要对组件进行深度监听
         module().then((content: any) => levelIcon.value = markRaw(content.default));
     };
@@ -242,8 +252,8 @@
     };
 
     const exitLogin = () => {
-        store.commit('userModule/changeUserLoginState', false);
-        store.commit('userModule/clearSessdata');
+        updateUserLoginState(false);
+        clearSessdata();
         window.location.reload();
     };
 

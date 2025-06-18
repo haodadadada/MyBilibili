@@ -91,8 +91,8 @@
 <script setup lang="ts">
     import { ref, onActivated, onDeactivated, nextTick } from 'vue';
     import { useRoute } from 'vue-router';
-    import { useStore } from 'vuex';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import debounce from '@/utils/common/debounce';
     import fetchVideoStream from '@/utils/videoStreamPreview';
     import observeLastEle from '@/utils/observer';
@@ -159,8 +159,8 @@
 
     const emit = defineEmits(['checkIsNewVideo']);
 
-    const store = useStore();
-    const sessdata = store.state.userModule.sessdata;
+    const { userStore } = useStores();
+    const { sessdata } = userStore;
 
     const route = useRoute();
 

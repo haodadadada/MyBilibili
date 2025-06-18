@@ -4,16 +4,16 @@
 
 <script setup lang="js">
     import { nextTick, ref, watch, onUnmounted } from 'vue';
-    import { useStore } from 'vuex';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import debounce from '@/utils/common/debounce';
     import dmProto from '@/assets/proto/dm.json';
     import encWbi from '@/utils/wrid';
     import protobuf from 'protobufjs/light';
     import { getDmList } from '@/api/home';
     const props = defineProps(['playerVideoInfo', 'curPlayerTime', 'danmakuSetting', 'positionTrigger']);
-    const store = useStore();
-    const sessdata = store.state.userModule.sessdata || '';
+    const { userStore } = useStores();
+    const { sessdata, wbi_key } = userStore;
 
     // 控制弹幕关闭开启
     let isClosed = ref(false);
@@ -150,7 +150,7 @@
             // 动画结束后隐藏
             danmukuDom.style.display = 'none';
             // 从轨道中移除
-            tracksPool.value[trackIndex] = tracksPool.value[trackIndex].slice(1);
+            if(tracksPool.value[trackIndex]) tracksPool.value[trackIndex] = tracksPool.value[trackIndex].slice(1);
         }, {once: true});
         return true;
     };
@@ -448,7 +448,6 @@
 
     const fetchDmList = async(params, sessdata = '') => {
         if('type' in params && 'oid' in params && 'segment_index' in params) {
-            const wbi_key = store.state.userModule.wbi_key;
             const { img_key, sub_key } = wbi_key;
             const queryString = encWbi(params, img_key, sub_key);
             const newParams = new URLSearchParams(queryString);

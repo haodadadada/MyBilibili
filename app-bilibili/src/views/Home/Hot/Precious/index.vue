@@ -92,8 +92,8 @@
 <script setup lang="ts">
     import { ref, onMounted, onDeactivated } from 'vue';
     import { useRoute } from 'vue-router';
-    import { useStore } from 'vuex';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import debounce from '@/utils/common/debounce';
     import fetchVideoStream from '@/utils/videoStreamPreview';
     import stopPreview from '@/utils/stopPreview';
@@ -161,8 +161,8 @@
 
     const emit = defineEmits(['checkIsNewVideo']);
     const route = useRoute();
-    const store = useStore();
-    const sessdata = store.state.userModule.sessdata;
+    const { userStore } = useStores();
+    const { sessdata } = userStore;
 
     let isLoading = ref(true);
     let curMouseIndex = ref<number>(-1);

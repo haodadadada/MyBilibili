@@ -179,8 +179,9 @@
 <script setup lang='ts'>
 import { ref, Ref, onActivated, onDeactivated, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
-import { useStore } from 'vuex';
 import * as R from 'ramda';
+import useStores from '@/stores/index';
+
 import debounce from '@/utils/common/debounce';
 import encWbi from '@/utils/wrid';
 import Hls from 'hls.js';
@@ -235,10 +236,8 @@ interface RcmdLiveItem {
 
 const emit = defineEmits(['checkIsNewLive', 'scrollToTop']);
 const route = useRoute();
-// Store 类型推断
-const store = useStore();
-const buvid3 = store.state.userModule.buvid3 || '';
-const sessdata = store.state.userModule.sessdata || '';
+const { userStore } = useStores();
+const { buvid3, sessdata, wbi_key } = userStore;
 // 定义常量和响应式数据
 let rcmdLiveRooms = ref<RcmdLiveItem[]>([]);
 let curMouseIndex = ref<number>(-1);
@@ -316,7 +315,6 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
         page: page,
         page_size: pageSize,
       };
-      const wbi_key = store.state.userModule.wbi_key;
       const { img_key, sub_key } = wbi_key;
       const queryString = encWbi(params, img_key, sub_key);
       const newParams = new URLSearchParams(queryString);
@@ -369,7 +367,6 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
         page: page,
         page_size: pageSize,
       };
-      const wbi_key = store.state.userModule.wbi_key;
       const { img_key, sub_key } = wbi_key;
       const queryString = encWbi(params, img_key, sub_key);
       const newParams = new URLSearchParams(queryString);

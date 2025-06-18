@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse, ResponseType } from 'axios';
+import axios, { AxiosProgressEvent, AxiosError, AxiosRequestConfig, AxiosResponse, ResponseType, InternalAxiosRequestConfig  } from 'axios';
 import { ElMessage } from 'element-plus';
 import { isFormData } from '../utils/common/isFormData';
 
@@ -13,7 +13,20 @@ interface RequestOption {
 
 const request = axios.create({
     baseURL: import.meta.env.VITE__ENV === 'development' ? '/webapi' : import.meta.env.VITE_API_BASE_URL + '/webapi',
-    timeout: 10000
+    timeout: 50000
+});
+
+request.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+    if(config.url?.includes('recommand')) {
+        config.onDownloadProgress = (progressEvent: AxiosProgressEvent) => {
+            const total = progressEvent.total || 1; // 确保总数不为0
+            const loaded = progressEvent.loaded;
+            const percent = Math.round((loaded / total) * 100);
+            // 在控制台输出下载进度
+            console.log(`下载进度: ${percent}%`);
+        };
+    };
+    return config;
 });
 
 // GET 请求类型
@@ -32,6 +45,7 @@ const get = async <T>(option: RequestOption): Promise<AxiosResponse<T>> => {
         const result = await request(config);
         return result;
     } catch (err: unknown) {
+        console.log('Error in GET request:', err);
         handleError(err);
         if (err instanceof AxiosError) {
             // 强制断言 response.data 为特定类型
@@ -149,7 +163,7 @@ const handleError = (err: unknown) => {
             // 请求已发出但没有收到响应
             ElMessage({
                 type: 'error',
-                message: '服务器无响应，请检查网络', 
+                message: err.message || '服务器无响应，请检查网络', 
                 offset: 40
             });
         }

@@ -23,8 +23,8 @@
 
 <script setup lang="js">
     import { ref, onActivated, nextTick, onDeactivated, computed } from 'vue';
-    import { useStore } from 'vuex';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import CommentItem from './CommentItem.vue';
     import { getSecondReply } from '@/api/comment/index';
     import observeLastEle from '@/utils/observer';
@@ -43,8 +43,8 @@
         // 防止isEndDetail被缓存
         isEndDetail.value = false;
     };
-    const store = useStore();
-    const sessdata = store.state.userModule.sessdata || null;
+    const { userStore } = useStores();
+    const { sessdata } = userStore;
 
     // 请求评论详情
     let isEndDetail = ref(false);

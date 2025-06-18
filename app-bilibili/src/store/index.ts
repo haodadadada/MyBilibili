@@ -1,7 +1,6 @@
 import { createStore } from 'vuex';
 import createPersistedstate from 'vuex-persistedstate';
 import userModule from './user';
-import newsModule from './news';
 import playerModule from './player';
 export default createStore({
   state: {
@@ -14,7 +13,6 @@ export default createStore({
   },
   modules: {
     userModule,
-    newsModule,
     playerModule
   },
   plugins: [
@@ -29,7 +27,6 @@ export default createStore({
         'userModule.buvid3', 
         'userModule.sessdata', 
         'userModule.wbi_key',
-        'newsModule.detailInfo',
         'playerModule.commonSetting',
         'playerModule.otherSetting',
         'playerModule.videoCodecid',

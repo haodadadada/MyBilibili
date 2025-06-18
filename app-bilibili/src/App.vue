@@ -46,7 +46,7 @@
 
 <script setup lang="js">
   import { onMounted, ref, onUnmounted, nextTick } from 'vue';
-  import { useStore } from 'vuex';
+  import useStores  from '@/stores/index';
   import Sidebar from '@/components/Sidebar/index.vue';
   import Navbar from '@/components/Navbar/index.vue';
   import ExitDialog from '@/components/Dialog/index.vue';
@@ -54,7 +54,8 @@
 
   import closeImg from '@/assets/icon/common/close.svg';
 
-  const store = useStore();
+  const { userStore } = useStores();
+  const { updateUserLight } = userStore;
   let isShow = ref(false);
   const updateIsShow = (state) => {
     isShow.value = state;
@@ -123,22 +124,22 @@
       case 1: {
         const systemColorMode = await getSystemColorMode();
         if(systemColorMode) {
-          store.commit('userModule/changeUserLight', false);
+          updateUserLight(false);
           document.documentElement.dataset.theme = 'dark';
         }
         else {
-          store.commit('userModule/changeUserLight', true);
+          updateUserLight(true);
           document.documentElement.dataset.theme = 'light';
         };
         break;
       }
       case 2: {
-        store.commit('userModule/changeUserLight', true);
+        updateUserLight(true);
         document.documentElement.dataset.theme = 'light';
         break;
       }
       case 3: {
-        store.commit('userModule/changeUserLight', false);
+        updateUserLight(false);
         document.documentElement.dataset.theme = 'dark';
         break;
       }

@@ -19,14 +19,18 @@
         </div>
         <div class="side-placehold"></div>
         <div class="side-bottom pb-20">
-            <div @click="handleClickPersonalBtn" v-if="!store.state.userModule.isLogin" class="btn-lg right-golg flex-center">
+            <div 
+                v-if="!isLogin" 
+                @click="handleClickPersonalBtn"
+                class="btn-lg right-golg flex-center"
+            >
                 <component :is="avatar_default" class="default"></component>
             </div>
             <div v-else class="flex-center">
                 <img
-                    v-if="userInfo.face"
+                    v-if="'face' in userInfo && userInfo.face"
                     class="default" 
-                    :src="userInfo.face"
+                    :src="(userInfo.face as string)"
                     @click="handleClickPersonalBtn"
                 >
                 <component 
@@ -53,9 +57,10 @@
 
 <script setup lang="ts">
     import { ref, onMounted, computed, markRaw, watch } from 'vue';
-    import { useStore } from 'vuex';
     import { useRouter, useRoute } from 'vue-router';
     import * as R from 'ramda';
+    import { storeToRefs } from 'pinia';
+    import useStores from '@/stores/index';
     import { getLoginNav } from '@/api/user';
     import {
         avatar_default,
@@ -68,7 +73,6 @@
         updates,
         video
     } from './images.js';
-
     interface SideItem {
         route: string;
         name?: string;
@@ -77,20 +81,20 @@
         action?: () => void;
     }
 
-    const store = useStore();
+    const { userStore } = useStores();
+    const { sessdata } = userStore;
+    const { isLight, isLogin, userInfo } = storeToRefs(userStore);
+    
+    const { updateUserInfo, clearUserInfo, updateUserLight, updateUserLoginState, updateWbiKey } = userStore;
     const router = useRouter();
     const route = useRoute();
     const goLogin = () => {
         window.electronAPI.send('login_create');
     };
-    let userInfo = computed(() => store.state.userModule.userInfo);
-    const sessdata = store.state.userModule.sessdata;
-    let isLight = computed(() => {
-        return store.state.userModule.isLight;
-    });
-    const colorModeIcon = computed(() => store.state.userModule.isLight ? light : dark);
+
+    const colorModeIcon = computed(() => isLight.value ? light : dark);
     const handleChangeBg = () => {
-        store.commit('userModule/changeUserLight', !isLight.value);
+        updateUserLight(!isLight.value);
         changeRootTheme();
     };
     // 对于组件不必要添加响应式可以使用markRaw避免进行深度递归仅仅监测引用的变化
@@ -118,7 +122,7 @@
         router.push('/personal-space');
     };
     const handleClickPersonalBtn = () => {
-        if(store.state.userModule.isLogin) {
+        if(isLogin.value) {
             goPersonalSpace();
         }
         else {
@@ -168,7 +172,7 @@
     };
     const handleClickSideBottomNav = (index: number) => {
         const idx = index - sideTopInfo.value.length;
-        if('action' in sideBottomInfo.value[idx] &&  sideBottomInfo.value[idx].action) {
+        if('action' in sideBottomInfo.value[idx] && sideBottomInfo.value[idx].action) {
             sideBottomInfo.value[idx].action();
         };
         updateCurIndex(index);
@@ -197,15 +201,15 @@
                 sub_url.lastIndexOf('/') + 1,
                 sub_url.lastIndexOf('.')
             );
-            store.commit('userModule/updateWbiKey', {img_key, sub_key});
+            updateWbiKey({ img_key, sub_key });
             if(result.code === 0) {
                 const { face, mid, uname, level_info: { current_level } } = result.data;
-                store.commit('userModule/changeUserLoginState', true);
-                store.commit('userModule/changeUserInfo', { face, mid, uname, current_level });
+                updateUserLoginState(true);
+                updateUserInfo({ face, mid, uname, current_level });
             }
             else {
-                store.commit('userModule/changeUserLoginState', false);
-                store.commit('userModule/clearSessdata');
+                updateUserLoginState(false);
+                clearUserInfo();
             };
         } catch(err) {
             console.log('获取登录状态失败', err);

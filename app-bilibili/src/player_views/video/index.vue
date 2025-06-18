@@ -12,8 +12,8 @@
 
 <script setup lang="ts">
     import { computed, onMounted, onUnmounted, provide, ref } from 'vue';
-    import { useStore } from 'vuex';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import { getHomeVideoInfo } from '@/api/home/index';
     import throttle from '@/utils/common/throttle';
     import Navbar from '@/player_components/Navbar/index.vue';
@@ -66,8 +66,8 @@
         title: string,
     }
 
-    const store = useStore();
-    const sessdata: string = store.state.userModule.sessdata || '';
+    const { userStore } = useStores();
+    const { sessdata } = userStore;
     // 通过ref实现响应式注入到多级子组件
     let videoInfo = ref<VideoInfoItem | null>({} as VideoInfoItem);
     let reply = ref();

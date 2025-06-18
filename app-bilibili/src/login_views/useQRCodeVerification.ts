@@ -1,7 +1,7 @@
 import { onMounted } from 'vue';
-import { useStore } from 'vuex';
 import QRCode from 'qrcode';
 import * as R from 'ramda';
+import useStores from '@/stores/index';
 import { 
     getQRCode, 
     getQRCodePoll, 
@@ -21,8 +21,8 @@ interface QRCodePollResponse {
 }
 
 export default function useQRCodeVerification() {
-    const store = useStore();
-    
+    const { userStore } = useStores();
+    const { updateSessdata } = userStore;
     const fetchQRCode = R.curry(async (
         getQRCodeFn: () => Promise<any>, 
         generateQRCodeFn: (url: string, callback: (error: Error | null | undefined) => void) => void, 
@@ -61,7 +61,7 @@ export default function useQRCodeVerification() {
             const params = new URLSearchParams(url);
             const SESSDATA = params.get('SESSDATA');
             if (SESSDATA) {
-                store.commit('userModule/updateSessdata', SESSDATA);
+                updateSessdata(SESSDATA);
                 window.electronAPI.sendMessage('vuex_update_from_login', JSON.stringify({ sessdata: SESSDATA, windowId: 'video' }));
                 window.electronAPI.sendMessage('login_exit');
                 return true;

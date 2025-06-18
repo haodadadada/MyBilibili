@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 import LoginApp from './login_views/index.vue';
-import store from './store/index';
 import 'element-plus/dist/index.css';
 import '@/common/css/index/index.scss';
 import '@/common/css/font/font.css';
@@ -9,4 +10,6 @@ import '@/common/css/fixed/map.scss';
 import '@/common/css/fixed/light.scss';
 import '@/Tailwind.css';
 const app = createApp(LoginApp);
-app.use(store).mount('#login');
+const pinia: any = createPinia();
+pinia.use(piniaPluginPersistedstate);
+app.use(pinia).mount('#login');

@@ -1,13 +1,21 @@
 <template>
     <div class="player-content flex-center">
-        <div class="player-video-area flex-center" v-ratio="{ ratio: moreSettingOptions[1].curIndex === 1 ? 4 / 3 : 16 / 9 }">
+        <div 
+            class="player-video-area flex-center" 
+            v-ratio="{ ratio: (otherSetting as any)[1].curIndex === 1 ? 4 / 3 : 16 / 9 }"
+        >
             <div class="player-video-wrap flex-center">
                 <video 
                     crossorigin="anonymous" 
                     preload="auto" 
-                    :src="videoInfo ? videoInfo.videoSrc : ''" 
                     ref="playerRef"
-                    :style="{ transform: playerSettingOptions[0].isOpen ? 'scaleX(-1)' : '', aspectRatio: moreSettingOptions[1].curIndex === 1 ? '4 / 3' : '16 / 9' }"
+                    :src="videoInfo ? videoInfo.videoSrc : ''" 
+                    :style="{ 
+                        transform: (commonSetting as any)[0].isOpen ? 'scaleX(-1)' : '', 
+                        aspectRatio: (otherSetting as any)[1].curIndex === 1 ? '4 / 3' : '16 / 9',
+                        objectFit: isVerticalVideo ? 'contain' : 'fill'
+                    }"
+                    @loadedmetadata="handleLoadMetadata"
                 >
                 </video>
             </div>
@@ -441,7 +449,7 @@
                                         >
                                             <div v-if="!isShowMoreSetting" class="text-[12px] font-[600]">
                                                 <div
-                                                    v-for="item of playerSettingOptions" :key="item.id" 
+                                                    v-for="item of (commonSetting as any)" :key="item.id" 
                                                     class="setting-option flex items-centermb-5">
                                                     <span class="flex-shrink-0 mr-10">{{ item.name }}</span>
                                                     <el-switch 
@@ -458,7 +466,7 @@
                                                 </div>
                                             </div>
                                             <div v-if="isShowMoreSetting" class="text-[12px] font-[600]">
-                                                <div v-for="item of moreSettingOptions" :key="item.id" class="mb-5">
+                                                <div v-for="item of (otherSetting as any)" :key="item.id" class="mb-5">
                                                     <div>{{ item.name }}</div>
                                                     <div class="flex">
                                                         <span
@@ -783,7 +791,7 @@
                 <!-- 隐藏简介按钮 -->
                 <div 
                     class="player-hide-introduce-btn flex-center" 
-                    :style="isShowIntroduce ? 'transform: translateY(-50%);  border-radius: 5px 0 0 5px; ' : 'transform: translateY(-50%) rotate(180deg); border-radius: 0 5px 5px 0;'" 
+                    :style="isShowIntroduce ? 'transform: translateY(-50%); border-radius: 5px 0 0 5px; ' : 'transform: translateY(-50%) rotate(180deg); border-radius: 0 5px 5px 0;'" 
                     v-show="isMouseMoving" 
                     @click.capture="handleClickHideIntroduceBtn"
                 >
@@ -813,8 +821,9 @@
 
 <script setup lang="ts">
     import { computed, ref, Ref, inject, watch, onMounted, onUnmounted, nextTick } from 'vue';
-    import { useStore } from 'vuex';
+    import { storeToRefs } from 'pinia';
     import * as R from 'ramda';
+    import useStores from '@/stores/index';
     import { useAudioBalancer } from './useAudioBalancer';
     import debounce from '@/utils/common/debounce';
     import fetchVideoStream from '@/utils/videoStreamSingle';
@@ -904,12 +913,16 @@
         videoSrc?: string,
         mediaSource?: MediaSource
     }
-    
+
+    type CodecType = 'AVC' | 'HEVC' | 'AV1';
+
     const props = defineProps(['windowMode']);
     const emit = defineEmits(['updatePanelState']);
-    const store = useStore();
-    const sessdata = store.state.userModule.sessdata || '';
-
+    const { userStore, playerStore } = useStores();
+    const { sessdata } = userStore;
+    const { updateCommonSetting, updateOtherSetting } = playerStore;
+    const { commonSetting, otherSetting, videoCodecid } = storeToRefs(playerStore);
+    
     const videoInfo: Ref<VideoInfoItem | null> = inject('videoInfo', ref(null));
     let videoBlobUrls = ref([]);
     let stopVideo: ((playVideo?: {cancel: () => void}) => void) | null = null;
@@ -917,6 +930,13 @@
     let startVideo: (() => Promise<void>) | null = null;
     let playerRef = ref<HTMLVideoElement | null>(null);
 
+    // 判断 video 为竖屏还是横屏
+    let isVerticalVideo = ref(false);
+    const handleLoadMetadata = () => {
+        if(!playerRef.value) return;
+        const { videoWidth, videoHeight } = playerRef.value;
+        isVerticalVideo.value = videoHeight > videoWidth;
+    };
     const keepInfoAndPlayVideo = async (videoInfo: Ref<VideoInfoItem>, qualityOptionId = 32) => {
         const videosStreamInfo = await fetchHomeRcmdPlayUrl(videoInfo.value, sessdata);
         if(!videosStreamInfo) return null;
@@ -926,12 +946,11 @@
         qualityOptional.value = R.filter((item: QualityOptionItem) => R.includes(item.id)(ids))(qualityOptions.value);
         const video = R.filter(R.propEq(qualityOptionId, 'id'))(videoOptions);
         const sortedVideo = (() => {
-            if(store.state.playerModule.otherSetting[2].curIndex === 0) return video;
-            
-            const optionItem = store.state.playerModule.otherSetting[2];
+            if(otherSetting.value[2].curIndex === 0) return video;
+            const optionItem = otherSetting.value[2];
             const index = optionItem.curIndex;
             const optionName = optionItem.option[index];
-            const codecid = store.state.playerModule.videoCodecid[optionName];
+            const codecid = videoCodecid.value[(optionName as CodecType)];
             return R.sort(
                 (a: StreamInfo, b: StreamInfo) => (b.codecid === codecid ? 1 : 0) - (a.codecid === codecid ? 1 : 0)
             )(video);
@@ -939,15 +958,15 @@
         const audio = R.filter(R.propEq(30216, 'id'))(audioOptions);
         if(!playerRef.value) return null;
         return async (currentTime = 0) => {
-            return await fetchVideoStream(
-                sortedVideo, 
-                videoInfo.value, 
-                playerRef as Ref<HTMLMediaElement>, 
+            return await fetchVideoStream({
+                videosStreamInfo: sortedVideo, 
+                videoItem: videoInfo.value, 
+                videoRef: playerRef as Ref<HTMLMediaElement>, 
                 videoBlobUrls, 
-                audio[0], 
+                audioStreamInfo: audio[0], 
                 sessdata, 
                 currentTime
-            );
+            });
         };
     };
     watch(videoInfo, async () => {
@@ -1359,6 +1378,13 @@
         await updatePlayerVolume(curVideoVolume.value);
     };
 
+    // 下载视频
+    const handleClickDownloadBtn = () => {
+        if(!videoInfo.value) return;
+        const { bvid = '', cid = ''} = videoInfo.value;
+        window.electronAPI.sendMessage('download_video', { bvid, cid, sessdata, videoId: curQuality.value });
+    };
+
     // 控制音量显示
     let isShowVolume = ref(false);
     let hideVolumeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1380,8 +1406,6 @@
     };
     
     // 播放器设置
-    let playerSettingOptions = computed(() => store.state.playerModule.commonSetting);
-    let moreSettingOptions = computed(() => store.state.playerModule.otherSetting);
     let isShowMoreSetting = ref(false);
     const updateMoreSettingState = (settingState: boolean) => {
         isShowMoreSetting.value = settingState;
@@ -1407,11 +1431,11 @@
     };
 
     const handleUpdateCommonSetting = (id: number) => {
-        store.commit('playerModule/updateCommonSetting', { id });
+        updateCommonSetting({ id });
     };
     const audioMode = ref<'off' | 'balance' | 'detail'>('off');
     const handleUpdateOtherSetting = (id: number, index: number) => {
-        store.commit('playerModule/updateOtherSetting', { id, index });
+        updateOtherSetting({ id, index });
         if(id.toString() == '3' && playerRef.value) {
             audioMode.value = (() => {
                 if(index === 0) return 'balance';
@@ -1796,7 +1820,6 @@
                     max-width: 100%;
                     max-height: 100%;
                     background-color: #000;
-                    object-fit: fill;
                     overflow-clip-margin: content-box;
                     overflow: clip;
                 }

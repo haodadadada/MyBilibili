@@ -23,15 +23,20 @@
 
 <script setup lang="ts">
     import { ref, onActivated, onDeactivated, nextTick } from 'vue';
-    import { useStore } from 'vuex';
+    import { storeToRefs } from 'pinia';
+    import useStores from '@/stores/index';
     import { debounceSetContainerWidth } from '@/utils/container';
     import { getBuvid } from '@/api/home';
+
     interface NavItem {
         path: string;
         name: string;
     };
     const emit = defineEmits(['changeSize', 'updateNav']);
-    const store = useStore();
+    const { userStore } = useStores();
+    const { buvid3 } = storeToRefs(userStore);
+    const { updateBuvid3 } = userStore;
+
     const containerRef = ref<HTMLElement | null>(null);
     const contentRef = ref<HTMLElement | null>(null);
     let navItems = ref([
@@ -92,14 +97,12 @@
     };
 
     const getAndsaveBuvid = async () => {
-        const buvid3 = store.state.userModule.buvid3;
-        if(buvid3) {
+        if(buvid3.value) {
             return;
         };
         const response = await getBuvid();
-        console.log(response.data);
         if(response.status === 200 && response.data.code === 0) {
-            store.commit('userModule/updateBuvid3', response.data.data.buvid);
+            updateBuvid3(response.data.data.buvid);
         };
     };
     onActivated(async () => {

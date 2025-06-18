@@ -136,10 +136,9 @@
 
 <script setup lang="ts">
     import {  ref, onMounted, onUnmounted, watch, computed } from 'vue';
-    import { useStore } from 'vuex';
     import { useRoute } from 'vue-router';
     import * as R from 'ramda';
-
+    import useStores from '@/stores/index';
     import debounce from '@/utils/common/debounce';
     import encWbi from '@/utils/wrid';
     import fetchVideoStream from '@/utils/videoStreamPreview';
@@ -211,8 +210,8 @@
 
     const emit = defineEmits(['changeSize', 'updateNav']);
     const route = useRoute();
-    const store = useStore();
-    const sessdata: string = store.state.userModule.sessdata;
+    const { userStore } = useStores();
+    const { sessdata, wbi_key } = userStore;
     const contentRef = ref<HTMLElement | null>(null);
 
     const orderBtnList = ref<OrderBtn[]>([
@@ -404,7 +403,6 @@
     const fetchTypeSearchList = async (keyword: string) => {
         try {
             isLoading.value = true;
-            const wbi_key = store.state.userModule.wbi_key;
             const { img_key, sub_key } = wbi_key;
             const params = {
                 search_type: 'video',

@@ -1,7 +1,8 @@
 import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 import App from './App.vue';
 import router from './router/index';
-import store from './store/index';
 import * as echarts from 'echarts';
 import 'element-plus/dist/index.css';
 import '@/common/css/index/index.scss';
@@ -75,4 +76,6 @@ app.directive('lazyload', {
 app.directive('skeleton', {
     ...skeleton
 });
-app.use(store).use(router).mount('#app');
+const pinia: any = createPinia();
+pinia.use(piniaPluginPersistedstate);
+app.use(pinia).use(router).mount('#app');    

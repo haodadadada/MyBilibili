@@ -77,8 +77,9 @@
 
 <script setup lang="ts">
     import { ref, onActivated } from 'vue';
-    import { useStore } from 'vuex';
     import * as R from 'ramda';
+    import { storeToRefs } from 'pinia';
+    import useStores from '@/stores/index';
     import encWbi from '@/utils/wrid';
     import { getHomePgcRank } from '@/api/home/hot';
 
@@ -100,13 +101,12 @@
         desc: string;
     };
 
-    const store = useStore();
-    const sessdata: string = store.state.userModule.sessdata;
+    const { userStore } = useStores();
+    const { sessdata, wbi_key } = storeToRefs(userStore);
     let animeDramas = ref<AnimeItem[]>([]);
     let guochuangDramas = ref<GuochuangItem[]>([]);
     const fetchHomePgcRankList = async (season_type: number): Promise<AnimeItem[] | GuochuangItem[] | null> => {
-        const wbi_key = store.state.userModule.wbi_key;
-        const { img_key, sub_key } = wbi_key;
+        const { img_key, sub_key } = wbi_key.value;
         const params = { season_type, day: 3, web_location: 333.934 };
         const queryString = encWbi(params, img_key, sub_key);
         const newParams = new URLSearchParams(queryString);
@@ -124,7 +124,7 @@
             w_rid: paramsObj.wridts || '',
             ...paramsObj,
         };
-        const response = await getHomePgcRank(completeParamsObj, sessdata);
+        const response = await getHomePgcRank(completeParamsObj, sessdata.value);
         const successAction = R.pipe(
             R.path(['data', 'list']) as (data: any) => any[],
             R.when(
