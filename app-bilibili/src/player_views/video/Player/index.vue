@@ -1378,13 +1378,6 @@
         await updatePlayerVolume(curVideoVolume.value);
     };
 
-    // 下载视频
-    const handleClickDownloadBtn = () => {
-        if(!videoInfo.value) return;
-        const { bvid = '', cid = ''} = videoInfo.value;
-        window.electronAPI.sendMessage('download_video', { bvid, cid, sessdata, videoId: curQuality.value });
-    };
-
     // 控制音量显示
     let isShowVolume = ref(false);
     let hideVolumeTimer: ReturnType<typeof setTimeout> | null = null;
