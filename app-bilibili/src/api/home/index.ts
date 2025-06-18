@@ -74,6 +74,12 @@ const getBuvid = async (sessdata: string = ''): Promise<AxiosResponse<GetRespons
     });
 };
 
+const getWebId = async (): Promise<AxiosResponse<GetResponse>> => {
+    return await get({
+        url: '/getwebid'
+    });
+};
+
 export {
     getHomePlayUrl,
     getHomeVideoStream,
@@ -81,5 +87,6 @@ export {
     getHomeVideoShot,
     getHomeVideoRelated,
     getDmList,
-    getBuvid
+    getBuvid,
+    getWebId
 };

@@ -37,6 +37,7 @@ class HomeRouter {
         this.router.get('/webapi/home/live/anchor/info', HomeController.fetchAnchorInfo);
 
         this.router.get('/webapi/getbuvid', HomeController.fetchBuvid);
+        this.router.get('/webapi/getwebid', HomeController.fetchWebId);
     };
     getRouter() {
         return this.router;

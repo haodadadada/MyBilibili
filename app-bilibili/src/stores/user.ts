@@ -17,6 +17,7 @@ interface UserState {
         img_key: string;
         sub_key: string;
     };
+    webId: string;
 };
 
 const useUserStore = defineStore('user', {
@@ -34,7 +35,8 @@ const useUserStore = defineStore('user', {
         wbi_key: {
             img_key: '',
             sub_key: ''
-        }
+        },
+        webId: ''
     }),
     actions: {
         updateUserInfo(value: UserInfo) {
@@ -72,6 +74,12 @@ const useUserStore = defineStore('user', {
         },
         clearBuvid3() {
             this.buvid3 = '';
+        },
+        updateWebId(value: string) {
+            this.webId = value;
+        },
+        clearWebId() {
+            this.webId = '';
         }
     },
     persist: true

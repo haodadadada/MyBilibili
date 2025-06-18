@@ -180,11 +180,12 @@
 import { ref, Ref, onActivated, onDeactivated, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import * as R from 'ramda';
+import Hls from 'hls.js';
+import { storeToRefs } from 'pinia';
 import useStores from '@/stores/index';
 
 import debounce from '@/utils/common/debounce';
 import encWbi from '@/utils/wrid';
-import Hls from 'hls.js';
 import { 
   getLiveRecommand,
   getLiveStreamUrl,
@@ -192,7 +193,7 @@ import {
   getLiveCategoryRecommand,
 } from '@/api/home/live';
 import observeLastEle from '@/utils/observer';
-
+import getAndSaveWebId from '@/utils/webId';
 import downIcon from '@/assets/icon/common/down.svg';
 import onlineIcon from '@/assets/icon/common/online.svg';
 
@@ -238,6 +239,7 @@ const emit = defineEmits(['checkIsNewLive', 'scrollToTop']);
 const route = useRoute();
 const { userStore } = useStores();
 const { buvid3, sessdata, wbi_key } = userStore;
+const { webId } = storeToRefs(userStore);
 // 定义常量和响应式数据
 let rcmdLiveRooms = ref<RcmdLiveItem[]>([]);
 let curMouseIndex = ref<number>(-1);
@@ -282,8 +284,8 @@ const fetchLiveAreaList = async (): Promise<void> => {
       R.when(
         (message: string) => message !== '' && message !== 'undefined',
         (message: string) => {
-            ElMessage.error(message);
-            throw new Error(message);
+          ElMessage.error(message);
+          throw new Error(message);
         },
       )
     );
@@ -314,6 +316,7 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
         web_location: '0.0',
         page: page,
         page_size: pageSize,
+        w_webid: webId.value,
       };
       const { img_key, sub_key } = wbi_key;
       const queryString = encWbi(params, img_key, sub_key);
@@ -326,6 +329,7 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
         web_location: paramsObj.web_location,
         wts: Number(paramsObj.wts),
         w_rid: paramsObj.w_rid,
+        w_webid: paramsObj.w_webid,
       };
 
       const response = await getLiveRecommand(compeleteParams, sessdata, buvid3);
@@ -366,6 +370,7 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
         area_id: curAreaId,
         page: page,
         page_size: pageSize,
+        w_webid: webId.value,
       };
       const { img_key, sub_key } = wbi_key;
       const queryString = encWbi(params, img_key, sub_key);
@@ -380,6 +385,7 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
         web_location: paramsObj.web_location,
         wts: Number(paramsObj.wts),
         w_rid: paramsObj.w_rid,
+        w_webid: paramsObj.w_webid,
       };
       const response = await getLiveCategoryRecommand(compeleteParams, sessdata, buvid3);
       const successAction = R.pipe(
@@ -611,6 +617,9 @@ const handleClickLiveRoom = (item: RcmdLiveItem, index: number) => {
 
 onActivated(async (): Promise<void> => {
   try {
+    if(!webId.value) {
+      await getAndSaveWebId();
+    };
     triggerFetchHomeRecommand();
   } catch (err) {
     console.log('err fetch', err);

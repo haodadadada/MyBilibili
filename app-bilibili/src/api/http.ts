@@ -11,6 +11,7 @@ interface RequestOption {
     responseType?: ResponseType;
 };
 
+// timeout设置的太短可能会导致 网络不良时视频分片请求中断
 const request = axios.create({
     baseURL: import.meta.env.VITE__ENV === 'development' ? '/webapi' : import.meta.env.VITE_API_BASE_URL + '/webapi',
     timeout: 50000

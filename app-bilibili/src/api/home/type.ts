@@ -96,7 +96,8 @@ export interface LiveRecommandReq {
     platform: string,
     web_location: number | string,
     wts: number,
-    w_rid: string
+    w_rid: string,
+    w_webid: string
 };
 
 export interface LiveStreamUrlReq {

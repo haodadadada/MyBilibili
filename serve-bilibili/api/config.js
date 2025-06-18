@@ -63,6 +63,8 @@ const URL_LIVE_DANMUKU = 'https://api.live.bilibili.com/xlive/web-room/v1/index/
 const URL_ROOM_INFO = 'https://api.live.bilibili.com/room/v1/Room/get_info';
 // 直播间主播信息
 const URL_ANCHOR_INFO = 'https://api.live.bilibili.com/live_user/v1/UserInfo/get_anchor_in_room';
+// 获取WebId
+const URL_WEBID = 'https://live.bilibili.com/p/eden/area-tags';
 module.exports = {
     URL_BUVID3,
     URL_LOGIN_QRCODE,
@@ -106,5 +108,6 @@ module.exports = {
     URL_LIVE_PLAYER,
     URL_LIVE_DANMUKU,
     URL_ROOM_INFO,
-    URL_ANCHOR_INFO
+    URL_ANCHOR_INFO,
+    URL_WEBID
 };

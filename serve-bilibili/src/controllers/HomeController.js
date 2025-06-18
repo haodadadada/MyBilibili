@@ -29,7 +29,8 @@ const {
     URL_LIVE_PLAYER,
     URL_LIVE_DANMUKU,
     URL_ROOM_INFO,
-    URL_ANCHOR_INFO
+    URL_ANCHOR_INFO,
+    URL_WEBID
 } = require('../../api/config');
 class HomeController {
     static async fetchHomeRecommand(req, res) {
@@ -990,6 +991,18 @@ class HomeController {
                 code: result.code
             });
         };
-    }
+    };
+    static async fetchWebId(_, res) {
+        const response = await Request.get({
+            url: URL_WEBID,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            }
+        });
+        res.send({
+            ActionType: 'OK',
+            data:  response.data,
+        });
+    };
 };
 module.exports = HomeController;

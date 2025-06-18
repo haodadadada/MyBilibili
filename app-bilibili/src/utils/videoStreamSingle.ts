@@ -364,7 +364,7 @@ export default async ({
             }
         
             return segments;
-        }
+        };
         function shouldLoadNextSegment() {
             const currentTime = videoRef.value.currentTime;
             const buffered = videoRef.value.buffered;
