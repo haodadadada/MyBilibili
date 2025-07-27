@@ -95,9 +95,8 @@ export default {
         if (img) img.onload = null;
         const styleTag = document.querySelector('.skeleton-style');
         if (styleTag) {
-            styleTag.remove();  // 移除插入的样式
+            styleTag.remove();
         };
-        
     }
 };
   

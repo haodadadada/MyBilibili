@@ -36,7 +36,7 @@ class TrayEvents {
 
     #bindClickEvent() {
         this.tray.on('click', () => {
-            if (this.tray.win) {
+            if (this.tray.win && this.tray.win.isLoaded) {
                 // 切换窗口的显示和隐藏状态
                 this.tray.win.isVisible() ? this.tray.win.hide() : this.tray.win.show();
             } else {

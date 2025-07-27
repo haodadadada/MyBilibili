@@ -365,12 +365,14 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
     else {
       const params = {
         platform: 'web',
-        web_location: '0.0',
+        web_location: '444.253',
         parent_area_id: curParentId,
         area_id: curAreaId,
         page: page,
         page_size: pageSize,
         w_webid: webId.value,
+        vajra_business_key: '',
+        sort_type: ''
       };
       const { img_key, sub_key } = wbi_key;
       const queryString = encWbi(params, img_key, sub_key);
@@ -386,8 +388,10 @@ const fetchLiveRecommand = debounce(async (): Promise<void> => {
         wts: Number(paramsObj.wts),
         w_rid: paramsObj.w_rid,
         w_webid: paramsObj.w_webid,
+        vajra_business_key: paramsObj.vajra_business_key || '',
+        sort_type: paramsObj.sort_type || ''
       };
-      const response = await getLiveCategoryRecommand(compeleteParams, sessdata, buvid3);
+      const response = await getLiveCategoryRecommand(compeleteParams, sessdata);
       const successAction = R.pipe(
         R.applySpec({
           hasMore: R.pathOr<number>(0, ['data', 'has_more']),
@@ -617,9 +621,8 @@ const handleClickLiveRoom = (item: RcmdLiveItem, index: number) => {
 
 onActivated(async (): Promise<void> => {
   try {
-    if(!webId.value) {
-      await getAndSaveWebId();
-    };
+    // webid需要实时更新
+    await getAndSaveWebId();
     triggerFetchHomeRecommand();
   } catch (err) {
     console.log('err fetch', err);

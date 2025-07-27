@@ -2,12 +2,7 @@ import { ipcMain, nativeTheme } from 'electron';
 import axios from 'axios';
 import WebSocket from 'ws';
 import zlib from 'zlib';
-
-import fs from 'fs'; // 文件系统模块
-import ffmpeg from 'ffmpeg-static'; // FFmpeg 静态可执行文件路径
-import path from 'path';
 import ping from 'ping';
-import { execFile } from 'child_process'; // 执行可执行文件的工具
 import { getConfig, setConfig, resetConfig } from './setting.js';
 export default {
     mainWindowIpc(app, mainWindowActions) {
@@ -346,130 +341,6 @@ export default {
         ipcMain.handle('get_setting', () => {
             const config = getConfig();
             return config;
-        });
-        ipcMain.on('download_video', async (_event, data) => {
-            const { bvid = '', cid = '', sessdata = '', videoId = 32, audioId = 30216 } = data;
-            if(!bvid || !cid) {
-                return;
-            };
-            try {
-                const URL_HOME_VIDEO_PLAYER = 'https://api.bilibili.com/x/player/wbi/playurl';
-                const response = await axios({
-                    url: URL_HOME_VIDEO_PLAYER,
-                    method: 'GET',
-                    headers: {
-                        "Cookie": sessdata ? `SESSDATA=${sessdata}` : '',
-                        'Referer': 'https://www.bilibili.com/',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                        'Origin': 'https://www.bilibili.com'
-                    },
-                    params: {
-                        bvid,
-                        cid,
-                        fnval: 16
-                    }
-                });
-                const result = response.data;
-                const videoOptions = result.data.dash.video;
-                const audioOptions = result.data.dash.audio;
-                const videoUrl = videoOptions.filter(video => video.id === videoId)[0].baseUrl || '';
-                const audioUrl = audioOptions.filter(audio => audio.id === audioId)[0].baseUrl || '';
-                async function downloadFile(url, outputPath) {
-                    const writer = fs.createWriteStream(outputPath);
-                    try {
-                        const response = await axios({
-                        url,
-                        method: 'GET',
-                        responseType: 'stream',
-                        headers: {
-                            'Referer': 'https://www.bilibili.com/',
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                            'Origin': 'https://www.bilibili.com'
-                        }
-                        });
-                        
-                        // pipe为nodejs内置方法，用于流数据的传输
-                        response.data.pipe(writer);
-                    
-                        return new Promise((resolve, reject) => {
-                            writer.on('finish', resolve);
-                            writer.on('error', reject);
-                        });
-                    } catch (error) {
-                        // console.error(`下载文件失败: ${url}`, error);
-                        throw error;
-                    }
-                };
-                
-                // 合并音视频文件
-                function mergeM4S(videoPath, audioPath, outputPath) {
-                    return new Promise((resolve, reject) => {
-                        // FFmpeg 合并命令
-                        const args = [
-                            '-i', videoPath,
-                            '-i', audioPath,
-                            '-c:v', 'copy',
-                            '-c:a', 'copy',
-                            '-f', 'mp4',
-                            outputPath,
-                            '-loglevel', 'quiet',
-                            '-fflags', '+genpts',
-                            '-avoid_negative_ts', 'make_zero',
-                            '-itsoffset', '0.0',
-                            '-map', '0:v:0',
-                            '-map', '1:a:0'
-                        ];
-                    
-                        // 运行命令 调用 FFmpeg
-                        execFile(ffmpeg, args, (error, stdout, stderr) => {
-                            if (error) {
-                                reject(error);
-                                return;
-                            };
-                            resolve(outputPath);
-                        });
-                    });
-                };
-                
-                // 主逻辑：下载并合并视频和音频
-                async function downloadAndMerge(videoUrl, audioUrl, outputFileName) {
-                    try {
-                        const tempDir = path.join(app.getAppPath(), 'videos-download');
-                        if (!fs.existsSync(tempDir)) {
-                            fs.mkdirSync(tempDir);
-                        };
-                        const videoPath = path.join(tempDir, 'video.m4s');
-                        const audioPath = path.join(tempDir, 'audio.m4s');
-                        const outputPath = path.join(tempDir, outputFileName);
-                        // 下载视频和音频文件
-                        await downloadFile(videoUrl, videoPath);
-                        await downloadFile(audioUrl, audioPath);
-                        // 合并音视频
-                        const result = await mergeM4S(videoPath, audioPath, outputPath);
-                        // 删除临时文件
-                        fs.unlinkSync(videoPath);
-                        fs.unlinkSync(audioPath);
-                        return result;
-                    } catch (error) {
-                        console.error('下载或合并失败');
-                        throw error;
-                    };
-                };
-                // 示例调用
-                const timestamp = new Date().getTime();
-                const outputFileName = `${timestamp}-output.mp4`;
-                
-                downloadAndMerge(videoUrl, audioUrl, outputFileName)
-                    .then((outputFile) => {
-                        console.log('最终合并文件路径:', outputFile);
-                    })
-                    .catch((err) => {
-                        console.error('处理失败:', err);
-                    });
-                
-            } catch(error) {
-                console.log('下载视频失败', error);
-            };
         });
     }
 };

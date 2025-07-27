@@ -16,9 +16,12 @@ const getHomePopular = async (data: HomePopularReq, sessdata: string): Promise<A
         }
     });
 };
-const getHomeSeries = async (): Promise<AxiosResponse<GetResponse>> => {
+const getHomeSeries = async (sessdata: string): Promise<AxiosResponse<GetResponse>> => {
     return await get({
         url: 'home/series',
+        headers: {
+            sessdata
+        }
     });
 };
 const getHomeSeriesOne = async (data: HomeSeriesReq, sessdata: string): Promise<AxiosResponse<GetResponse>> => {

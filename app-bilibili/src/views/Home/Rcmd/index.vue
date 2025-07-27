@@ -177,6 +177,7 @@
         width: number;
     }
 
+    
     const emit = defineEmits(['checkIsNewVideo', 'scrollToTop']);
     const route = useRoute();
     const { userStore } = useStores();
@@ -192,7 +193,7 @@
     let videoRefs = ref<(HTMLVideoElement)[]>([]);  // 视频 DOM 元素的引用数组
 
     // 状态变量
-    let isLoading = ref<boolean>(true);
+    let isLoading = ref<boolean>(false);
 
     // 获取推荐视频
     const fetchHomeRecommand = debounce(async (sessdata: string, freshIndex: number, lastShowList: string[], ps = pageCount): Promise<void> => {
@@ -234,6 +235,7 @@
         };
     }, 500);
     const triggerFetchHomeRecommand = async (...args: Parameters<typeof fetchHomeRecommand>) => {
+        if (isLoading.value) return;
         try {
             isLoading.value = true;
             await fetchHomeRecommand(...args);

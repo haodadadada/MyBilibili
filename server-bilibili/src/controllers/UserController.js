@@ -9,7 +9,10 @@ const {
     URL_COUNTRY_LIST,
     URL_LOGIN_NAV,
     URL_USER_MYINFO,
-    URL_USER_CARD
+    URL_USER_CARD,
+    URL_USER_NAV,
+    URL_USER_STAT,
+    URL_USER_HISTORY,
 } = require('../../api/config');
 class UserController {
     static buvid() {
@@ -23,7 +26,7 @@ class UserController {
         var md5 = MD5(mac.join(':'));
         var md5Arr = md5.split('');
         return `XY${md5Arr[2]}${md5Arr[12]}${md5Arr[22]}${md5}`
-    }
+    };
     static async fetchQRCode(req, res) {
         try {
             let response = await Request.get({
@@ -324,6 +327,106 @@ class UserController {
                 });
             };
         } catch(error) {
+            res.status(500).send({
+                message: error.message.message
+            });
+        };
+    };
+    static async fetchUserNav(req, res) {
+        try {
+            const { sessdata } = req.headers;
+            const response = await Request.get({
+                url: URL_USER_NAV,
+                headers: {
+                    "Cookie": `SESSDATA=${sessdata}`,
+                    "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Referer': 'https://www.bilibili.com/',
+                    'Origin': 'https://www.bilibili.com'
+                },
+                data: req.query
+            });
+            const result = response.data;
+            if(result.code === 0) {
+                res.send({
+                    ActionType: 'OK',
+                    data: result.data,
+                    code: result.code
+                });
+            }
+            else {
+                res.send({
+                    message: result.message,
+                    code: result.code
+                });
+            };
+        } catch(error) {
+            res.status(500).send({
+                message: error.message.message
+            });
+        };
+    };
+    static async fetchUserStat(req, res) {
+        try {
+            const { sessdata } = req.headers;
+            const response = await Request.get({
+                url: URL_USER_STAT,
+                headers: {
+                    "Cookie": `SESSDATA=${sessdata}`,
+                    "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Referer': 'https://www.bilibili.com/',
+                    'Origin': 'https://www.bilibili.com'
+                },
+                data: req.query
+            });
+            const result = response.data;
+            if(result.code === 0) {
+                res.send({
+                    ActionType: 'OK',
+                    data: result.data,
+                    code: result.code
+                });
+            }
+            else {
+                res.send({
+                    message: result.message,
+                    code: result.code
+                });
+            };
+        } catch(error) {
+            res.status(500).send({
+                message: error.message.message
+            });
+        };
+    };
+    static async fetchHistoryVideo(req, res) {
+        try {
+            const { sessdata } = req.headers;
+            const response = await Request.get({
+                url: URL_USER_HISTORY,
+                headers: {
+                    "Cookie": `SESSDATA=${sessdata}`,
+                    "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Referer': 'https://www.bilibili.com/',
+                    'Origin': 'https://www.bilibili.com'
+                },
+                data: req.query
+            });
+            const result = response.data;
+            if(result.code === 0) {
+                res.send({
+                    ActionType: 'OK',
+                    data: result.data,
+                    code: result.code
+                });
+            }
+            else {
+                res.send({
+                    message: result.message,
+                    code: result.code
+                });
+            };
+        } catch(error) {
+            console.log(error);
             res.status(500).send({
                 message: error.message.message
             });

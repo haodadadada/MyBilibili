@@ -6,6 +6,7 @@ class UserRouter {
         this.router = express.Router();
         this.initRoute();
     }
+    
     initRoute() {
         this.router.get('/webapi/user/qrcode_generate', UserController.fetchQRCode);
         this.router.get('/webapi/user/qrcode_poll', UserController.fetchQRCodePoll);
@@ -19,7 +20,11 @@ class UserRouter {
         this.router.get('/webapi/user/login/nav', UserController.fetchLoginNav);
         this.router.get('/webapi/user/space/myinfo', UserController.fetchOwnInfo);
         this.router.get('/webapi/user/card', UserController.fetchUserCard);
+        this.router.get('/webapi/user/navnum', UserController.fetchUserNav);
+        this.router.get('/webapi/user/stat', UserController.fetchUserStat);
+        this.router.get('/webapi/user/history/cursor', UserController.fetchHistoryVideo);
     }
+
     getRouter() {
         return this.router;
     }

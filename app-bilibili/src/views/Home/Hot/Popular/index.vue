@@ -204,6 +204,7 @@
         };
     });
     const triggerFetchPopularRecommand = async (...args: Parameters<typeof fetchPopularVideos>) => {
+        if(isLoading.value) return;
         try {
             if(isNoMore.value) return;
             isLoading.value = true;

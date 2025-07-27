@@ -27,7 +27,7 @@
             >
                 <transition name="player-control-fade">
                     <div class="player-control-wrap" 
-                        @click="(event) => event.stopPropagation()" 
+                        @click="(event: Event) => event.stopPropagation()" 
                         @mousemove="handleControlBottomMouseMove"
                         v-show="isMouseMoving"
                     >
@@ -1723,7 +1723,10 @@
         )(R.path(['data'], response));
     });
 
-    const fetchHomeVideoShot: (ids: { aid: string | number; bvid: string | number; cid: string | number }) => Promise<ShotInfo | string> = R.once(async (ids) => {
+    const fetchHomeVideoShot: (ids: { aid: string | number; bvid: string | number; cid: string | number }) => Promise<ShotInfo | string> = async (ids) => {
+        if(shotInfo.value) {
+            return shotInfo.value;
+        };
         const { aid = '', bvid = '', cid = '' } = ids;
         const response = await getHomeVideoShot({aid, bvid, cid, index: 1});
         const successAction = R.pipe(
@@ -1737,7 +1740,7 @@
             successAction,
             failAction
         )(R.path(['data'], response));
-    });
+    };
 
     let isSmallWindow = computed(() => props.windowMode === 'small');
     

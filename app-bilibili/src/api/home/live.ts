@@ -34,12 +34,11 @@ const getLiveAreaList = async (): Promise<AxiosResponse<GetResponse>> => {
         url: '/home/live/area'
     });
 };
-const getLiveCategoryRecommand = async (data: LiveAreaRecommandReq, sessdata: string, buvid3: string = ''): Promise<AxiosResponse<GetResponse>> => {
+const getLiveCategoryRecommand = async (data: LiveAreaRecommandReq, sessdata: string): Promise<AxiosResponse<GetResponse>> => {
     return await get<GetResponse>({
         url: '/home/live/category/recommand',
         data,
         headers: {
-            buvid3,
             sessdata
         }
     });
@@ -50,11 +49,12 @@ const getLiveCategoryRecommand = async (data: LiveAreaRecommandReq, sessdata: st
  * @param sessdata 
  * @returns 
  */
-const getLiveDanmakuUrl = async (data: LiveDanmakuReq, sessdata: string = ''): Promise<AxiosResponse<GetResponse>> => {
+const getLiveDanmakuUrl = async (data: LiveDanmakuReq, { sessdata, buvid3 }: { sessdata: string, buvid3: string } ): Promise<AxiosResponse<GetResponse>> => {
     return await get<GetResponse>({
         url: '/home/live/danmaku',
         data,
         headers: {
+            buvid3,
             sessdata
         }
     });

@@ -1,6 +1,11 @@
 import { AxiosResponse } from 'axios';
 import { get } from '../http';
-import { GetResponse, UserCardReq } from './type';
+import { 
+    GetResponse, 
+    UserCardReq,
+    UserNavReq,
+    UserHistory,
+} from './type';
 const getLoginNav = (sessdata: string) => {
     return get({
         url: '/user/login/nav',
@@ -26,8 +31,37 @@ const getUserCard = (data: UserCardReq, sessdata: string): Promise<AxiosResponse
         }
     });
 };
+const getUserNav = (data: UserNavReq, sessdata: string): Promise<AxiosResponse<GetResponse>> => {
+    return get({
+        url: '/user/navnum',
+        data,
+        headers: {
+            sessdata
+        }
+    });
+};
+const getUserStat = (sessdata: string): Promise<AxiosResponse<GetResponse>> => {
+    return get({
+        url: '/user/stat',
+        headers: {
+            sessdata
+        }
+    });
+};
+const getUserHistoryVideo = (data: UserHistory, sessdata: string = ''): Promise<AxiosResponse<GetResponse>> => {
+    return get({
+        url: '/user/history/cursor',
+        data,
+        headers: {
+            sessdata
+        }
+    });
+};
 export {
     getOwnInfo,
     getLoginNav,
-    getUserCard
+    getUserCard,
+    getUserNav,
+    getUserStat,
+    getUserHistoryVideo,
 };

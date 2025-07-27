@@ -1,11 +1,11 @@
 <template>
-    <div class="flex-center">
-        <img src="@/assets/other/theme-failed.png" alt="">
+    <div>
+        <Header></Header>
     </div>
 </template>
 
 <script setup>
-
+    import Header from './Header/index.vue';
 </script>
 
 <style lang="scss" scoped>

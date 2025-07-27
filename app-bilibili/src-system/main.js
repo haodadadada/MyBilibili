@@ -31,7 +31,7 @@ let win = null;
 let tray;
 
 const mainWindowConfigure = () => {
-  // win.webContents.openDevTools();
+  win.webContents.openDevTools();
   globalShortcut.register('CommandOrControl+R', () => win.reload());
   globalShortcut.register('F5', () => win.reload());
   win.webContents.on('render-process-gone', (e, details) => {
@@ -58,6 +58,7 @@ const handleMainWindowEvents = () => {
     isMainWinLoaded = true;
     closeLoadingWindow();
     win.show();
+    win.isLoaded = true;
   });
   win.on('close', () => {
     win = null;
@@ -166,7 +167,7 @@ let playerWindow = new Proxy(
 
 const playerWindowConfigure = (key) => {
   if(!key || typeof key != 'string' || !playerWindow.value[key]) return;
-  // playerWindow.value[key].webContents.openDevTools();
+  playerWindow.value[key].webContents.openDevTools();
   playerWindow.value[key].webContents.on('render-process-gone', (e, details) => {
     const crashDetails = `崩溃原因: ${details.reason}, 退出码: ${details.exitCode}, 信号: ${details.signal}`;
     logger.error(`播放窗口进程崩溃: ${crashDetails}`);

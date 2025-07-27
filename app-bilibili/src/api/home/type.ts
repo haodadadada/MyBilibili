@@ -97,7 +97,6 @@ export interface LiveRecommandReq {
     web_location: number | string,
     wts: number,
     w_rid: string,
-    w_webid: string
 };
 
 export interface LiveStreamUrlReq {
@@ -126,7 +125,10 @@ export interface LiveAreaRecommandReq {
     page: number,
     web_location: number | string,
     wts: number,
-    w_rid: string
+    w_rid: string,
+    w_webid: string,
+    vajra_business_key: string
+
 };
 
 export interface LiveDanmakuReq {

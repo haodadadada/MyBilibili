@@ -80,9 +80,11 @@ const useUserStore = defineStore('user', {
         },
         clearWebId() {
             this.webId = '';
-        }
+        },
     },
-    persist: true
+    persist: {
+        pick: ['userInfo', 'isLogin', 'isLight', 'sessdata', 'buvid3', 'wbi_key', 'webId']
+    }
 });
 
 export default useUserStore;

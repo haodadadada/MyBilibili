@@ -164,17 +164,18 @@
     });
     const emit = defineEmits(['updateDetailIds', 'updateDetailCommentState']);
     // 返回一个对象，其中 键是匹配的文件路径，如果eager 为true 值是导入的结果 为false值是导入该文件的函数
-    const images = import.meta.glob('../../../assets/icon/other/*.svg', { eager: true });
+    const images = import.meta.glob('../../../../assets/icon/other/*.svg', { eager: true });
     const levelIconsPath = [
-        '../../../assets/icon/other/level_0.svg',
-        '../../../assets/icon/other/level_1.svg',
-        '../../../assets/icon/other/level_2.svg',
-        '../../../assets/icon/other/level_3.svg',
-        '../../../assets/icon/other/level_4.svg',
-        '../../../assets/icon/other/level_5.svg',
-        '../../../assets/icon/other/level_6.svg',
+        '../../../../assets/icon/other/level_0.svg',
+        '../../../../assets/icon/other/level_1.svg',
+        '../../../../assets/icon/other/level_2.svg',
+        '../../../../assets/icon/other/level_3.svg',
+        '../../../../assets/icon/other/level_4.svg',
+        '../../../../assets/icon/other/level_5.svg',
+        '../../../../assets/icon/other/level_6.svg',
     ];
     const levelIcons = levelIconsPath.map(path => images[path]?.default);
+    
     const initMentionLinks = (str, nameArray, emote = null) => {
         // 正则匹配 @ 后面的名称，名称是以字母、数字或下划线开头的连续字符
         const mentionRegex = /@([\p{L}\w]+)/gu;

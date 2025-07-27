@@ -51,7 +51,7 @@
         id: number;
     }
     const { userStore } = useStores();
-    const { sessdata, userInfo, wbi_key } = userStore;
+    const { buvid3, sessdata, userInfo, wbi_key } = userStore;
     const userId = userInfo.mid || 0;
     let liveInfo = ref<{ roomid?: number }>({});
     provide('liveInfo', liveInfo);
@@ -67,12 +67,16 @@
             return;
         };
         const { img_key, sub_key } = wbi_key;
-        const params = { id: roomid };
+        const params = { 
+            id: roomid,
+            web_location: 444.8
+        };
         const queryString = encWbi(params, img_key, sub_key);
         const newParams = new URLSearchParams(queryString);
         const paramsObj = Object.fromEntries(newParams.entries());
         const completeParams = { id: roomid, ...paramsObj };
-        const response = await getLiveDanmakuUrl(completeParams, sessdata);
+        const response = await getLiveDanmakuUrl(completeParams, { sessdata, buvid3 });
+        console.log(response);
         const key = response.data.data.token;
         const host = response.data.data.host_list[0].host;
         const port = response.data.data.host_list[0].wss_port;

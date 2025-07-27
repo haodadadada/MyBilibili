@@ -72,8 +72,23 @@ const formatTime = (timestamp: number) => {
         return '刚刚';
     };
 };
+
+// 格式化历史记录时间描述
+const formatHistoryTime = (timestamp: number) => {
+    const now = moment();
+    const targetDate = moment.unix(timestamp);
+    if (now.isSame(targetDate, 'day')) {
+        return `今天 ${targetDate.format('HH:mm')}`;
+    } else if (now.clone().subtract(1, 'day').isSame(targetDate, 'day')) {
+        return `昨天 ${targetDate.format('HH:mm')}`;
+    } else {
+        return targetDate.format('MM-DD');
+    };
+};
+
 export {
     formatView,
     formatSeconds,
-    formatTime
+    formatTime,
+    formatHistoryTime
 };

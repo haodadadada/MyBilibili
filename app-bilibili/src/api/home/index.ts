@@ -74,9 +74,12 @@ const getBuvid = async (sessdata: string = ''): Promise<AxiosResponse<GetRespons
     });
 };
 
-const getWebId = async (): Promise<AxiosResponse<GetResponse>> => {
+const getWebId = async (sessdata: string = ''): Promise<AxiosResponse<GetResponse>> => {
     return await get({
-        url: '/getwebid'
+        url: '/getwebid',
+        headers: {
+            sessdata: sessdata
+        }
     });
 };
 

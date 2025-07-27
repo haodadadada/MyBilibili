@@ -164,9 +164,11 @@ class HomeController {
 
     static async fetchHomeSeriesList(req, res) {
         try {
+            const { sessdata } = req.headers;
             const response = await Request.get({
                 url: URL_HOME_HOT_SERIES,
                 headers: {
+                    'Cookie': sessdata ? `SESSDATA=${sessdata}` : '',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                     'Referer': 'https://www.bilibili.com/',
                     'Origin': 'https://www.bilibili.com'
@@ -586,9 +588,9 @@ class HomeController {
                 url: URL_LIVE_CATEGORY_RECOMMAND,
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                    'Referer': 'https://www.bilibili.com/',
-                    'Origin': 'https://www.bilibili.com',
-                    'Cookie': sessdata ? `buvid3=${buvid3};SESSDATA=${sessdata};buvid3=41F3173B-DEF5-A98D-3157-504B4C340CF073778infoc;` : ''
+                    'Referer': 'https://live.bilibili.com',
+                    'Origin': 'https://live.bilibili.com',
+                    'Cookie': sessdata ? `buvid3=${buvid3};SESSDATA=${sessdata};buvid4=D1BE06D7-AEE8-ACC9-211A-F80065A1CF8087254-024081703-Suu8L9Mi5DRH4dB90P7D5w%3D%3D` : ''
                 },
                 data: req.query,
             });
@@ -702,12 +704,12 @@ class HomeController {
 
     static async fetchLiveDanmakuUrl(req, res) {
         try {
-            const { sessdata } = req.headers;
+            const { buvid3, sessdata } = req.headers;
             const { id } = req.query || '';
             const response = await Request.get({
                 url: URL_LIVE_DANMUKU,
                 headers: {
-                    'Cookie': sessdata ? `SESSDATA=${sessdata}` : '',
+                    'Cookie': sessdata ? `buvid3=${buvid3};SESSDATA=${sessdata}` : '',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                     'Referer': `https://live.bilibili.com/${id}`,
                     'Origin': 'https://live.bilibili.com',
@@ -992,11 +994,13 @@ class HomeController {
             });
         };
     };
-    static async fetchWebId(_, res) {
+    static async fetchWebId(req, res) {
+        const { sessdata } = req.headers;
         const response = await Request.get({
             url: URL_WEBID,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Cookie': sessdata ? `SESSDATA=${sessdata}` : ''
             }
         });
         res.send({

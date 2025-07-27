@@ -84,7 +84,6 @@
     const { userStore } = useStores();
     const { sessdata } = userStore;
     const { isLight, isLogin, userInfo } = storeToRefs(userStore);
-    
     const { updateUserInfo, clearUserInfo, updateUserLight, updateUserLoginState, updateWbiKey } = userStore;
     const router = useRouter();
     const route = useRoute();
@@ -99,10 +98,10 @@
     };
     // 对于组件不必要添加响应式可以使用markRaw避免进行深度递归仅仅监测引用的变化
     const sideTopInfo = ref([
-        {route: 'home', name: '首页', index: 0, icon: markRaw(home)},
-        {route: 'video', name: '精选', index: 1, icon: markRaw(video)},
-        {route: 'updates', name: '动态', index: 2, icon: markRaw(updates)},
-        {route: 'user', name: '我的', index: 3, icon: markRaw(my)},
+        { route: 'home', name: '首页', index: 0, icon: markRaw(home) },
+        { route: 'video', name: '精选', index: 1, icon: markRaw(video) },
+        { route: 'updates', name: '动态', index: 2, icon: markRaw(updates) },
+        { route: 'center', name: '我的', index: 3, icon: markRaw(my) },
     ]);
     const sideBottomInfo = ref([
       {route: '', index: 4, icon: markRaw(colorModeIcon), action: handleChangeBg},
@@ -150,7 +149,7 @@
             updateCurIndex(side.index);
         }
         else {
-            updateCurIndex(-1);
+            updateCurIndex(-2);
         };
     };
     watch(() => route.path, initCurrentIndex);

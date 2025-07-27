@@ -27,7 +27,7 @@
     import useStores from '@/stores/index';
     import { debounceSetContainerWidth } from '@/utils/container';
     import { getBuvid } from '@/api/home';
-
+    import { useCheckNewCard } from '@/composable/useCheckNewCard';
     interface NavItem {
         path: string;
         name: string;
@@ -36,7 +36,7 @@
     const { userStore } = useStores();
     const { buvid3 } = storeToRefs(userStore);
     const { updateBuvid3 } = userStore;
-
+    const { checkIsNewVideo, checkIsNewLive } = useCheckNewCard();
     const containerRef = ref<HTMLElement | null>(null);
     const contentRef = ref<HTMLElement | null>(null);
     let navItems = ref([
@@ -79,22 +79,6 @@
     let internetStatus = ref(true);
 
     let removeListener: (() => void) | null = null;
-
-    let curPlayerWindowOfVideo = ref<{ index: number, routePath: string } | null>(null);
-    const checkIsNewVideo = (callback: (isNew: boolean) => unknown, index: number, routePath: string): void => {
-        // 判断是否是新的视频
-        const isNew = curPlayerWindowOfVideo.value ? curPlayerWindowOfVideo.value.index != index || curPlayerWindowOfVideo.value.routePath != routePath : true;
-        curPlayerWindowOfVideo.value = { index, routePath };
-        callback(isNew);
-    };
-
-    let curPlayerWindowOfLive = ref<{ index: number, routePath: string } | null>(null);
-    const checkIsNewLive = (callback: (isNew: boolean) => unknown, index: number, routePath: string): void => {
-        // 判断是否是新的直播
-        const isNew = curPlayerWindowOfLive.value ? curPlayerWindowOfLive.value.index != index || curPlayerWindowOfLive.value.routePath != routePath : true;
-        curPlayerWindowOfLive.value = { index, routePath };
-        callback(isNew);
-    };
 
     const getAndsaveBuvid = async () => {
         if(buvid3.value) {

@@ -26,6 +26,10 @@ const routes = [
     ]
   },
   {
+    path: '/center',
+    component: () => import('@/views/Center/index.vue'),
+  },
+  {
     path: '/personal-space', component: () => import('@/views/PersonalSpace/index.vue')
   },
   {

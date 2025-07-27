@@ -218,7 +218,7 @@
     const seriesPeriodNthInfo = ref<SeriesConfig>({});
 
     const fetchSeriesList = R.once(async (): Promise<void> => {
-        const response = await getHomeSeries();
+        const response = await getHomeSeries(sessdata);
         const successAction = R.pipe(
             R.path(['data', 'list']) as (data: any) => SeriesVideoItem[],
             R.tap((resData: any[]) => {

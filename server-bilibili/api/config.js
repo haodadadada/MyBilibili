@@ -43,6 +43,9 @@ const URL_DM_LIST = 'https://api.bilibili.com/x/v2/dm/wbi/web/seg.so';
 
 // 用户
 const URL_USER_CARD = 'https://api.bilibili.com/x/web-interface/card';
+const URL_USER_NAV = 'https://api.bilibili.com/x/space/navnum';
+const URL_USER_STAT = 'https://api.bilibili.com/x/web-interface/nav/stat';
+const URL_USER_HISTORY = 'https://api.bilibili.com/x/web-interface/history/cursor';
 
 // 综合搜索
 const URL_SEARCH_ALL = 'https://api.bilibili.com/x/web-interface/wbi/search/all/v2';
@@ -98,6 +101,9 @@ module.exports = {
     URL_DM_LIST,
 
     URL_USER_CARD,
+    URL_USER_NAV,
+    URL_USER_STAT,
+    URL_USER_HISTORY,
     
     URL_SEARCH_ALL,
     URL_SEARCH_TYPE,
