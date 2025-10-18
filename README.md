@@ -47,11 +47,16 @@ npm run electron:build
 ![直播间](screenshot/screenshot06.png)
 
 # 语言识别模型下载
-统一下载在model文件夹
-whisper.cpp https://github.com/ggml-org/whisper.cpp/releases
-本地模型 https://huggingface.co/ggerganov/whisper.cpp/tree/main
 
+所有模型文件统一存放在 `model` 文件夹下。
+
+- **whisper.cpp 项目地址：**  
+  [https://github.com/ggml-org/whisper.cpp/releases](https://github.com/ggml-org/whisper.cpp/releases)
+
+- **本地模型（Hugging Face）：**  
+  [https://huggingface.co/ggerganov/whisper.cpp/tree/main](https://huggingface.co/ggerganov/whisper.cpp/tree/main)
+  
 > **提示：** 
-> 部门依赖可能需要配置代理或者更换源下载
+> 部分依赖可能需要配置代理或者更换源下载
 
 
