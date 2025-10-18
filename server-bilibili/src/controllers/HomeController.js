@@ -1,5 +1,6 @@
 const Request = require('../../api/request');
-// const WebSocket = require('ws');
+const WebSocket = require('ws');
+const crypto = require('crypto');
 // const { brotliDecompressSync } = require('zlib');
 // const { TextDecoder } = require('util');
 // const fetch = require('node-fetch');
@@ -32,7 +33,20 @@ const {
     URL_ANCHOR_INFO,
     URL_WEBID
 } = require('../../api/config');
+const { 
+    XINGHUO_HTTP_API_KEY,
+    XINHUO_WS_APPID,
+    XINGHUO_WS_APISECRET,
+    XINGHUO_WS_APIKEY
+} = require('../../api/api_key');
+
+/**
+ * 字幕缓存 key: sse id, value: subtitle
+ */
+
 class HomeController {
+    static subtitleCache = new Map();
+
     static async fetchHomeRecommand(req, res) {
         try {
             const { sessdata } = req.headers;
@@ -164,11 +178,9 @@ class HomeController {
 
     static async fetchHomeSeriesList(req, res) {
         try {
-            const { sessdata } = req.headers;
             const response = await Request.get({
                 url: URL_HOME_HOT_SERIES,
                 headers: {
-                    'Cookie': sessdata ? `SESSDATA=${sessdata}` : '',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                     'Referer': 'https://www.bilibili.com/',
                     'Origin': 'https://www.bilibili.com'
@@ -394,7 +406,6 @@ class HomeController {
             });
         };
     };
-
     static async fetchHomeVideoShot(req, res) {
         try {
             const response = await Request.get({
@@ -457,6 +468,156 @@ class HomeController {
             });
         };
     };
+    static async fetchHomeVideoSummaryByHttp(req, res) {
+        const { content } = req.body;
+        try {
+            const url = 'https://spark-api-open.xf-yun.com/v1/chat/completions';
+            const response = await Request.post({
+                url,
+                headers: {
+                    'Authorization': `Bearer ${XINGHUO_HTTP_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                data: {
+                    "model": 'lite',
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "你是一个视频内容总结专家，擅长将视频内容进行高度概括和总结，你需要通过提取关键信息和核心观点来生成总结。"
+                        },
+                        {
+                            "role": "user",
+                            "content": '以下是这个视频的文字内容，请生成一份总结\n' + content
+                        }
+                    ],
+                }
+            });
+            const result = response.data;
+            if(result.code === 0) {
+                res.send({
+                    ActionType: 'OK',
+                    data: result.choices,
+                    code: result.code
+                });
+            }
+            else {
+                res.send({
+                    message: result.message,
+                    code: result.code
+                });
+            };
+        } catch(error) {
+            res.status(500).send({
+                message: error.message || '服务器错误'
+            });
+        };
+    };
+    static async saveVideoSubtitle(req, res) {
+        try {
+            const { content } = req.body;
+            const taskId = crypto.randomUUID();
+            HomeController.subtitleCache.set(taskId, content);
+            // 3分钟后删除缓存
+            setTimeout(() => {
+                HomeController.subtitleCache.delete(taskId);
+            }, 3 * 60 * 1000);
+            res.send({
+                ActionType: 'OK',
+                data: {
+                    taskId
+                },
+                code: 0
+            });
+        } catch(error) {
+            res.status(500).send({
+                message: error.message || '服务器错误'
+            });
+        };
+    };
+    static async fetchHomeVideoSummaryByWs(req, res) {
+        const { taskId } = req.query;
+        const content = HomeController.subtitleCache.get(taskId);
+        if(!content) {
+            res.send({
+                code: -1,
+                message: '字幕内容不存在或已过期, 请重新传入'
+            });
+            return;
+        };
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
+        try {
+            const host = 'spark-api.xf-yun.com';
+            const path = '/v1.1/chat';
+            const date = new Date().toUTCString();
+            let tmp = 'host: ' + host + '\n';
+            tmp += 'date: ' + date + '\n';
+            tmp += 'GET ' + path + ' HTTP/1.1';
+            const signature = crypto
+                .createHmac('sha256', XINGHUO_WS_APISECRET)
+                .update(tmp)
+                .digest('base64');
+            const authorization_origin = `api_key="${XINGHUO_WS_APIKEY}", algorithm="hmac-sha256", headers="host date request-line", signature="${signature}"`;
+            const authorization = Buffer.from(authorization_origin).toString('base64');
+            const v = {
+                authorization: authorization, // 上面生成的 authorization
+                date: date,                   // 步骤 1 生成的 date
+                host: 'spark-api.xf-yun.com'  // 主机名
+            };
+            const query = new URLSearchParams(v).toString();
+            const url = `wss://spark-api.xf-yun.com/v1.1/chat?${query}`;
+            const ws = new WebSocket(url);
+            
+            ws.onopen = () => {
+                const data = {
+                    "header": {
+                        "app_id": XINHUO_WS_APPID,
+                    },
+                    "parameter": {
+                        "chat": {
+                            "domain": "lite",
+                            "temperature": 0.5,
+                            "max_tokens": 1024, 
+                        }
+                    },
+                    "payload": {
+                        "message": {
+                            "text": [
+                                {
+                                    "role": "system",
+                                    "content": "你是一个视频内容总结专家，擅长将视频内容进行高度概括和总结，你需要通过提取关键信息和核心观点来生成总结。"
+                                },
+                                {
+                                    "role": "user",
+                                    "content": '以下是这个视频的文字内容，请生成一份视频内容的总结\n' + content
+                                }
+                            ]
+                        }
+                    }
+                };
+                ws.send(JSON.stringify(data)); // 转成字符串发送
+            };
+
+            // \n\n表示结束
+            ws.onmessage = (event) => {
+                console.log("收到消息：", event.data);
+                const data = JSON.parse(event.data);
+                if(data.header.status === 2) {
+                    ws.close();
+                    res.write(`data: ${event.data}\nevent: close\n\n`);
+                    res.end();
+                    HomeController.subtitleCache.delete(taskId);
+                } else {
+                    res.write(`data: ${event.data}\n\n`);
+                };
+            };
+        } catch(error) {
+            res.write(`data: ${error.message}\nevent: error\n\n`);
+            res.end();
+        };
+    };
     static async fetchDmList(req, res) {
         try {
             let sessdata;
@@ -482,6 +643,8 @@ class HomeController {
             });
         };
     };
+
+
     static async fetchAllSearchList(req, res) {
         try {
             const { sessdata } = req.headers;

@@ -34,7 +34,7 @@
                             v-lazyload="`${pic.img_src}@176w_176h_1c_1s.avif`"
                             v-overflow
                             alt="" 
-                            class="photo mr-5" 
+                            class="photo mr-5 mt-5" 
                             width="88"
                             height="88"
                             draggable="false"
@@ -115,7 +115,7 @@
                     4.278173333333333 2.8906666666666667 4.666666666666666 2.8778466666666667z" fill="currentColor"></path>
                 </svg>
             </div>
-            <div class="comment-replies" v-if="props.isNeedShowReplies && comment.replies.length > 0">
+            <div class="comment-replies" v-if="props.isNeedShowReplies && comment.replies && comment.replies.length > 0">
                 <div class="reply-item max-line text-[14px] line-15 mb-5" v-for="reply of comment.replies" :key="reply.rpid">
                     <span class="title">{{ reply.member.uname }}</span>
                     <component 
@@ -412,7 +412,7 @@
                 .photos-area {
                     .photos-wrap {
                         display: flex;
-                        flex-wrap: nowrap;
+                        flex-wrap: wrap;
                         overflow: hidden;
                         width: 100%;
                         .photo {

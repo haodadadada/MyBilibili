@@ -1,5 +1,6 @@
 <template>
     <div class="container-rcmd">
+        <span @click="handleClickMessageBtn({ message: 'this is the message' })">弹框</span>
         <div class="content-rcmd">
             <div class="content-wrap" v-if="rcmdVideos.length > 0">
                 <div v-for="(item, index) in rcmdVideos" :key="item.id" class="box-card" @click="handleClickVideo(item, index)" v-skeleton>
@@ -119,6 +120,7 @@
     import stopPreview from '@/utils/stopPreview';
     import debounce from '@/utils/common/debounce';
     import observeLastEle from '@/utils/observer';
+    import showMessage from '@/utils/showMessage';
     import {
         formatView,
         formatSeconds,
@@ -177,6 +179,9 @@
         width: number;
     }
 
+    const handleClickMessageBtn = ({ message }: { message: string }): void => {
+        showMessage({ message });
+    };
     
     const emit = defineEmits(['checkIsNewVideo', 'scrollToTop']);
     const route = useRoute();

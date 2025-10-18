@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios';
-import { get } from '../http';
+import { get, post } from '../http';
 import type { 
     HomePlayUrlReq, 
     HomeVideoStreamReq, 
@@ -53,6 +53,25 @@ const getHomeVideoRelated = async (data: VideoRelatedReqOptional): Promise<Axios
         data
     });
 };
+
+const saveHomeVideoSubtitle = async (content: string): Promise<AxiosResponse<GetResponse>> => {
+    return await post({
+        url: '/home/video/subtitle/save',
+        data: {
+            content
+        }
+    });
+};
+
+const getHomeVideoSummary = async (content: string): Promise<AxiosResponse<GetResponse>> => {
+    return await post({
+        url: '/home/video/summary',
+        data: {
+            content
+        }
+    });
+};
+
 // axios不支持直接响应Uint8Array，需要手动转换
 const getDmList = async (data: DmListReq, sessdata?: string) => {
     return await get({
@@ -83,12 +102,16 @@ const getWebId = async (sessdata: string = ''): Promise<AxiosResponse<GetRespons
     });
 };
 
+
+
 export {
     getHomePlayUrl,
     getHomeVideoStream,
     getHomeVideoInfo,
     getHomeVideoShot,
     getHomeVideoRelated,
+    saveHomeVideoSubtitle,
+    getHomeVideoSummary,
     getDmList,
     getBuvid,
     getWebId

@@ -250,6 +250,7 @@
             ...Object.fromEntries(newParams.entries()),
             number: newParams.get('number') || 1
         };
+        
         const response = await getHomeSeriesOne(paramsObj, sessdata);
         const successAction = R.pipe(
             R.applySpec({
@@ -373,14 +374,14 @@
 
     const refreshSeriesVideo = async (): Promise<void> => {
         const number = seriesList.value[0]?.number || 1;
-        await fetchSeriesOne(number);
+        await fetchSeriesOne(number, sessdata);
         seriesPeriodNth.value = number;
     };
 
     onMounted(async (): Promise<void> => {
         await fetchSeriesList();
         const number = seriesList.value[0]?.number || 1;
-        await fetchSeriesOne(number);
+        await fetchSeriesOne(number, sessdata);
         seriesPeriodNth.value = number;
         await nextTick();
     });

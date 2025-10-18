@@ -407,6 +407,9 @@
                                 </div>
                             </div>
                             <div class="player-control-bottom-right flex-end flex-1">
+                                <div @click="handleClickDownloadBtn" v-if="!isSmallWindow">
+                                    <span style="color: #fff;">下载</span>
+                                </div>
                                 <!-- 清晰度 -->
                                 <div class="player-ctrl-quality player-ctrl-btn text-[14px] weight-6"  v-if="!isSmallWindow">
                                     <transition name="opacity-fade">
@@ -827,18 +830,15 @@
     import { useAudioBalancer } from './useAudioBalancer';
     import debounce from '@/utils/common/debounce';
     import fetchVideoStream from '@/utils/videoStreamSingle';
-    import { getHomePlayUrl, getHomeVideoShot, getHomeVideoSummary, saveHomeVideoSubtitle } from '@/api/home';
+    import { getHomePlayUrl, getHomeVideoShot } from '@/api/home';
     import throttle from '@/utils/common/throttle';
     import withLock from '@/utils/common/withLock';
     import { formatSeconds } from '@/utils/videoFormatInfo';
-    import showMessage from '@/utils/showMessage';
-
     import Danmuku from '@/player_views/video/Danmuku/index.vue';
     import playIcon from '@/assets/player/play.svg';
     import rightIcon from '@/assets/icon/common/right.svg';
     import settingIcon from '@/assets/icon/player/setting.svg';
 
-    import type { VideoInfoItem } from '@/player_views/video/type';
     interface DanmakuElement extends HTMLElement {
         resetCurIndex: (curPlayerTime: number) => void,
         closeDanmaku: () => void,
@@ -889,6 +889,33 @@
         width: number;
     }
 
+    interface VideoInfoItem {
+        aid: number,
+        bvid: string,
+        cid: number,
+        desc: string,
+        owner: {
+            face: string,
+            mid: number,
+            name: string
+        },
+        pubdate: number,
+        stat: {
+            aid: number,
+            coin: number,
+            danmaku: number,
+            dislike: number,
+            evaluation: string,
+            favorite: number, 
+            like: number,
+            reply: number,
+            share: number,
+            view: number
+        },
+        title: string,
+        videoSrc?: string,
+        mediaSource?: MediaSource
+    }
 
     type CodecType = 'AVC' | 'HEVC' | 'AV1';
 
@@ -898,7 +925,6 @@
     const { sessdata } = userStore;
     const { updateCommonSetting, updateOtherSetting } = playerStore;
     const { commonSetting, otherSetting, videoCodecid } = storeToRefs(playerStore);
-    let isSmallWindow = computed(() => props.windowMode === 'small');
     
     const videoInfo: Ref<VideoInfoItem | null> = inject('videoInfo', ref(null));
     let videoBlobUrls = ref([]);
@@ -1355,6 +1381,13 @@
         await updatePlayerVolume(curVideoVolume.value);
     };
 
+    // 下载视频
+    const handleClickDownloadBtn = () => {
+        if(!videoInfo.value) return;
+        const { bvid = '', cid = ''} = videoInfo.value;
+        window.electronAPI.sendMessage('download_video', { bvid, cid, sessdata, videoId: curQuality.value });
+    };
+
     // 控制音量显示
     let isShowVolume = ref(false);
     let hideVolumeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1652,7 +1685,7 @@
             R.propOr(null, 'action') as (data: any) => () => void
         )(keydownActions);
         if(action) {
-            action();
+            await action();
         };
     };
     const handleWindowKeyUp = async (event: KeyboardEvent)  => {
@@ -1664,7 +1697,7 @@
             R.propOr(null, 'action') as (data: any) => () => void
         )(keyUpActions);
         if(action) {
-            action();
+            await action();
         };
     };
 
@@ -1700,10 +1733,7 @@
         )(R.path(['data'], response));
     });
 
-    const fetchHomeVideoShot: (ids: { aid: string | number; bvid: string | number; cid: string | number }) => Promise<ShotInfo | string> = async (ids) => {
-        if(shotInfo.value) {
-            return shotInfo.value;
-        };
+    const fetchHomeVideoShot: (ids: { aid: string | number; bvid: string | number; cid: string | number }) => Promise<ShotInfo | string> = R.once(async (ids) => {
         const { aid = '', bvid = '', cid = '' } = ids;
         const response = await getHomeVideoShot({aid, bvid, cid, index: 1});
         const successAction = R.pipe(
@@ -1717,107 +1747,10 @@
             successAction,
             failAction
         )(R.path(['data'], response));
-    };
-
-    
-    // 下载视频
-    const downloadVideo = async () => {
-        if(!videoInfo.value) return;
-        const { bvid = '', cid = ''} = videoInfo.value;
-        const outputPath: string = await window.electronAPI.invoke('download_video', { bvid, cid, sessdata, videoId: curQuality.value });
-        if(outputPath) {
-            showMessage({ duration: 4200 ,message: '导出路径为： ' + outputPath});
-        };
-    };
-
-    let summaryText = ref('');
-    // 生成ai总结
-    const generateSummarize = async (): Promise<void> => {
-        if(!videoInfo.value) return;
-        const { bvid = '', cid = ''} = videoInfo.value;
-        let subtitle: string = '';
-        try {
-            subtitle = await window.electronAPI.invoke('subtitle_video', { bvid, cid, sessdata, videoId: curQuality.value, windowId: 'video' });
-        } catch (error: any) {
-            ElMessage.error(error.message || '获取字幕失败');
-            return;
-        };
-        const _generateSummarizeByHttp = async () => {
-            const response = await getHomeVideoSummary(subtitle);
-            console.log('summary', response);
-            const successAction = R.pipe(
-                R.path(['data']),
-                (messages) => {
-                    if(Array.isArray(messages) && messages.length > 0) {
-                        summaryText.value = messages.map((item: { index: number, message: { content: string, role: string } }) => item.message.content).join('\n');
-                    } else {
-                        ElMessage.error('AI总结失败,请稍后再试');
-                    };
-                }
-            );
-            const failAction = R.pipe(
-                R.pathOr('', ['message']) as (data: any) => string,
-                (message: string) => message ? ElMessage.error(message) : ElMessage.error('AI总结失败,请稍后再试')
-            );
-            R.ifElse(
-                R.propEq(0, 'code'),
-                successAction,
-                failAction
-            )(R.path(['data'], response));
-        };
-
-        const generateSummarizeByWs = async () => {
-            const response = await saveHomeVideoSubtitle(subtitle);
-            const sucessAction = R.pipe(
-                R.path(['data', 'taskId']),
-            );
-            const failAction = R.pipe(
-                R.pathOr('', ['message']) as (data: any) => string,
-                (message: string) => {
-                    if(message) {
-                        ElMessage.error(message);
-                    } else {
-                        ElMessage.error('字幕内容上传失败');
-                    };
-                    return '';
-                }
-            );
-            let taskId: string = R.ifElse(
-                R.propEq(0, 'code'),
-                sucessAction,
-                failAction
-            )(R.path(['data'], response)) as string;
-            if(!taskId) return;
-            const eventSource = new EventSource('/webapi/home/video/summary/stream?taskId=' + taskId);
-            const processEventData = (data: any) => {
-                if(data) {
-                    const text = data.payload.choices.text[0].content || '';
-                    summaryText.value += text;
-                };
-            };
-            eventSource.addEventListener('message', (event) => {
-                const data = JSON.parse(event.data);
-                processEventData(data);
-            });
-            eventSource.addEventListener('close', (event) => {
-                const data = JSON.parse(event.data);
-                processEventData(data);
-                eventSource.close();
-            });
-            eventSource.addEventListener('error', (event) => {
-                console.log('流拉取错误', event);
-                eventSource.close();
-            });
-        };
-        generateSummarizeByWs();
-    };
-
-    defineExpose({
-        downloadVideo,
-        generateSummarize,
     });
 
-
+    let isSmallWindow = computed(() => props.windowMode === 'small');
+    
     onMounted(async () => {
         updatePlayerSpeed(curSpeed.value);
         updatePlayerVolume(curVideoVolume.value);

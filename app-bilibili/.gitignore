@@ -19,6 +19,7 @@ components.d.ts
 src/common/css/fixed/*.css
 src/common/css/index/*.css
 videos-download/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

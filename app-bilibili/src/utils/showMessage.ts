@@ -3,7 +3,7 @@ import MessageBox from '@/components/MessageBox/index.vue';
 
 let instance: VNode | null = null;
 let container: Element | null = null;
-export default ({ message }: { message: string }) => {
+export default ({ duration, message }: { message: string, duration?: number }) => {
     const close = () => {
         if (container) {
             render(null, container);
@@ -17,11 +17,11 @@ export default ({ message }: { message: string }) => {
     };
     if (!instance) {
         container = document.createElement('div');
-        instance = createVNode(MessageBox, { message });
+        instance = createVNode(MessageBox, { duration, message });
         render(instance, container);
         document.body.appendChild(container);
         instance.component!.exposed!.onClose(close);
-    }
+    };
 
     return close;
 };

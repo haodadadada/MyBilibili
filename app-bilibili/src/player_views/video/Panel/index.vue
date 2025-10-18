@@ -32,6 +32,14 @@
                                 </svg>
                                 <span>重新加载</span>
                             </div>
+                            <div class="reload-btn-item flex-center" @click="handleClickDownloadBtn">
+                                <downloadImg class="mr-5 flex-center" width="17" height="17"/>
+                                <span>下载视频</span>
+                            </div>
+                            <div class="reload-btn-item flex-center" @click="handleClickSummaryBtn">
+                                <summaryImg class="mr-5 flex-center" width="17" height="17"/>
+                                <span>视频总结</span>
+                            </div>
                         </div>
                     </div>
                 </transition>
@@ -57,6 +65,9 @@
     import CommentDetailSection from './CommentComponents/CommentDetailSection.vue';
     import InfoComponents from './InfoComponents/index.vue';
     import dropdownImg from '@/assets/icon/common/dropdown.svg';
+    import downloadImg from '@/assets/icon/player/download.svg';
+    import summaryImg from '@/assets/icon/player/summary.svg';
+    const emit = defineEmits(['downloadVideo', 'generateSummarize']);
     const props = defineProps(['reply']);
     const selectComponent = computed(() => {
         if(tabBtnIndex.value === 0) {
@@ -127,6 +138,14 @@
         window.electronAPI.sendMessage('player_reload', JSON.stringify({ windowId: 'video' }));
     };
 
+    const handleClickDownloadBtn = () => {
+        emit('downloadVideo');
+    };
+
+    const handleClickSummaryBtn = () => {
+        emit('generateSummarize');
+    };
+
     onMounted(async () => {
         await nextTick();
         locateLine();
@@ -147,6 +166,7 @@ $tabHeight: 40px;
         user-select: none;
         .tab-wrap {
             position: relative;
+            z-index: 1;
             .tab-left {
                 position: relative;
                 height: 40px;
@@ -200,14 +220,19 @@ $tabHeight: 40px;
                 right: 0;
                 bottom: 0;
                 transform: translateY(100%);
-                width: 140px;
+                width: 120px;
                 border-radius: 5px;
-                padding: 10px 0;
                 background-color: var(--Ga9);
+                overflow: hidden;
                 .reload-btn {
                     color: #fff;
                     .reload-btn-item {
+                        transition: .3s;
+                        padding: 10px 0;
                         cursor: pointer;
+                        &:hover {
+                            background-color: #666;
+                        }
                     }
                 }
             }

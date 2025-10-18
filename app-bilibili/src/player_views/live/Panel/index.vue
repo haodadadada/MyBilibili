@@ -1,5 +1,6 @@
 <template>
     <div class="container-panel" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave" @mousemove="handleMouseMove">
+        <span @click="stopConnectDanmaku"  class="text-white">ting</span>
         <div class="danmaku-wrap" ref="danmakuWrapRef">
             <div class="danmaku-area pr-10">
                 <div v-for="item of danmakuList" :key="item.id_str" class="danmaku-item text-[12px] mt-15">
@@ -61,6 +62,9 @@
     let danmakuWrapRef = ref<HTMLElement | null>(null);
     let danmakuList: ComputedRef<DanmakuItem[]> = computed(() => props.danmakuList);
     let isNeedAutoScroll = ref<boolean>(true);
+    const stopConnectDanmaku = () => {
+        window.electronAPI.send('player_stop_live_package');
+    };
 
     let isShowScroll = ref<boolean>(false);
     const updateScrollState = (state: boolean) => {
@@ -112,7 +116,9 @@
             };
         };                                
         await nextTick();
-        if(danmakuWrapRef.value && isNeedAutoScroll.value) danmakuWrapRef.value.scrollTop = danmakuWrapRef.value.scrollHeight;
+        if(danmakuWrapRef.value && isNeedAutoScroll.value) {
+            danmakuWrapRef.value.scrollTop = danmakuWrapRef.value.scrollHeight - danmakuWrapRef.value.clientHeight;
+        };
     }, { deep: true });
     onBeforeUnmount(() => {
         stopWatchDanmakuList();

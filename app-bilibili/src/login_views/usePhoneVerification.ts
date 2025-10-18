@@ -89,7 +89,7 @@ export default function usePhoneVerification() {
                         area: '#area',
                         next_width: '200px',
                         https: true,
-                    }, (captchaObj: any) => { // Add appropriate types for `captchaObj`
+                    }, (captchaObj: any) => {
                     captchaObj.onReady(() => captchaObj.verify())
                         .onSuccess(async () => {
                             const validate = captchaObj.getValidate().geetest_validate;

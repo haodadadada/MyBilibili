@@ -36,6 +36,7 @@ export interface HomePlayUrlReq {
 export interface HomeVideoStreamReq {
     videoStreamUrl: string
 };
+
 export interface VideoInfoReq {
     aid?: string,
     bvid?: string

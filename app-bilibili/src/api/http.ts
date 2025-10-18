@@ -69,7 +69,7 @@ const get = async <T>(option: RequestOption): Promise<AxiosResponse<T>> => {
 };
 
 // POST 请求类型
-const post = async (option: RequestOption): Promise<AxiosResponse<unknown>> => {
+const post = async <T>(option: RequestOption): Promise<AxiosResponse<T>> => {
     try {
         const config: AxiosRequestConfig = {
             method: 'post',
@@ -82,7 +82,7 @@ const post = async (option: RequestOption): Promise<AxiosResponse<unknown>> => {
             responseType: option.responseType || 'json'
         };
 
-        let result: AxiosResponse<unknown>;
+        let result: AxiosResponse<T>;
         if (isFormData(option.data)) {
             result = await request({
                 ...config,

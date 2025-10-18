@@ -36,6 +36,7 @@
     "electron-log": "^5.1.5",
     "element-plus": "^2.9.0",
     "fflate": "^0.8.2",
+    "ffmpeg-static": "^5.2.0",
     "hls.js": "^1.5.20",
     "lodash": "^4.17.21",
     "md5": "^2.3.0",
@@ -139,7 +140,11 @@
       },
       {
         "from": "node_modules/ffmpeg-static/ffmpeg.exe",
-        "to": "resources/ffmpeg.exe"
+        "to": "extraResources/ffmpeg.exe"
+      },
+      {
+        "from": "model",
+        "to": "extraResources/model"
       }
     ]
   }

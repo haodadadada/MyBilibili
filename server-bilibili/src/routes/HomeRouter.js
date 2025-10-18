@@ -22,6 +22,9 @@ class HomeRouter {
         this.router.get('/webapi/home/video/shot', HomeController.fetchHomeVideoShot);
         this.router.get('/webapi/home/video/recommand', HomeController.fetchHomeVideoRecommand);
         this.router.get('/webapi/home/dm/list', HomeController.fetchDmList);
+        this.router.post('/webapi/home/video/summary', HomeController.fetchHomeVideoSummaryByHttp);
+        this.router.post('/webapi/home/video/subtitle/save', HomeController.saveVideoSubtitle);
+        this.router.get('/webapi/home/video/summary/stream', HomeController.fetchHomeVideoSummaryByWs);
 
         this.router.get('/webapi/home/search/all', HomeController.fetchAllSearchList);
         this.router.get('/webapi/home/search/type', HomeController.fetchTypeSearchList);

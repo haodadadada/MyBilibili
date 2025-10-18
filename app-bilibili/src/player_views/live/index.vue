@@ -76,7 +76,6 @@
         const paramsObj = Object.fromEntries(newParams.entries());
         const completeParams = { id: roomid, ...paramsObj };
         const response = await getLiveDanmakuUrl(completeParams, { sessdata, buvid3 });
-        console.log(response);
         const key = response.data.data.token;
         const host = response.data.data.host_list[0].host;
         const port = response.data.data.host_list[0].wss_port;
@@ -100,7 +99,7 @@
             likeCount: 0
         }
     });
-    removeInfoListener = window.electronAPI.receive('get_live_package', async (jsonInfo: any) => {
+    removeInfoListener = window.electronAPI.receive('get_live_package', (jsonInfo: any) => {
         const data = JSON.parse(jsonInfo);
         if(data.cmd === 'DANMU_MSG') {
             const info = data.info[0][15];

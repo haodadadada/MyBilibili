@@ -2,7 +2,12 @@ import { ipcMain, nativeTheme } from 'electron';
 import axios from 'axios';
 import WebSocket from 'ws';
 import zlib from 'zlib';
+
+import fs from 'fs'; // 文件系统模块
+import ffmpeg from 'ffmpeg-static'; // FFmpeg 静态可执行文件路径
+import path from 'path';
 import ping from 'ping';
+import { execFile, spawn } from 'child_process'; // 执行可执行文件的工具
 import { getConfig, setConfig, resetConfig } from './setting.js';
 export default {
     mainWindowIpc(app, mainWindowActions) {
@@ -297,6 +302,61 @@ export default {
             getPlayerWindow,
             getLoginWindow,
         } = commonActions;
+        /**
+         * 获取下载目录
+         * @returns 下载目录路径
+         */
+        function getDownloadDir() {
+            if (app.isPackaged) {
+                return path.join(process.resourcesPath, 'videos-download');
+            } else {
+                return path.join(process.cwd(), 'videos-download');
+            };
+        };
+        /**
+         * 获取ffmpeg路径
+         * @returns ffmpeg路径
+         */
+        function getFfmpegPath() {
+            if (app.isPackaged) {
+                return path.join(process.resourcesPath, 'extraResources', 'ffmpeg.exe');
+            } else {
+                return ffmpeg;
+            };
+        };
+
+        /**
+         * 流式下载文件
+         * @param {请求路径} url 
+         * @param {输出路径} outputPath 
+         * @returns 
+         */
+        async function downloadFile(url, outputPath) {
+            const writer = fs.createWriteStream(outputPath);
+            try {
+                const response = await axios({
+                    url,
+                    method: 'GET',
+                    responseType: 'stream',
+                    headers: {
+                        'Referer': 'https://www.bilibili.com/',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                        'Origin': 'https://www.bilibili.com'
+                    }
+                });
+                
+                // pipe为nodejs内置方法，用于流数据的传输
+                response.data.pipe(writer);
+            
+                return new Promise((resolve, reject) => {
+                    writer.on('finish', resolve);
+                    writer.on('error', reject);
+                });
+            } catch (error) {
+                // console.error(`下载文件失败: ${url}`, error);
+                throw error;
+            }
+        };
         const request = axios.create({
             timeout: 10000
         });
@@ -341,6 +401,331 @@ export default {
         ipcMain.handle('get_setting', () => {
             const config = getConfig();
             return config;
+        });
+        ipcMain.handle('download_video', async (_event, data) => {
+            const { bvid = '', cid = '', sessdata = '', videoId = 32, audioId = 30216 } = data;
+            if(!bvid || !cid) {
+                throw new Error('id不能为空');
+            };
+            try {
+                const URL_HOME_VIDEO_PLAYER = 'https://api.bilibili.com/x/player/wbi/playurl';
+                const response = await axios({
+                    url: URL_HOME_VIDEO_PLAYER,
+                    method: 'GET',
+                    headers: {
+                        "Cookie": sessdata ? `SESSDATA=${sessdata}` : '',
+                        'Referer': 'https://www.bilibili.com/',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                        'Origin': 'https://www.bilibili.com'
+                    },
+                    params: {
+                        bvid,
+                        cid,
+                        fnval: 16
+                    }
+                });
+                const result = response.data;
+                const videoOptions = result.data.dash.video;
+                const audioOptions = result.data.dash.audio;
+                const videoUrl = videoOptions.filter(video => video.id === videoId)[0].baseUrl || '';
+                const audioUrl = audioOptions.filter(audio => audio.id === audioId)[0].baseUrl || '';
+                async function downloadFile(url, outputPath) {
+                    const writer = fs.createWriteStream(outputPath);
+                    try {
+                        const response = await axios({
+                            url,
+                            method: 'GET',
+                            responseType: 'stream',
+                            headers: {
+                                'Referer': 'https://www.bilibili.com/',
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                                'Origin': 'https://www.bilibili.com'
+                            }
+                        });
+                        
+                        // pipe为nodejs内置方法，用于流数据的传输
+                        response.data.pipe(writer);
+                    
+                        return new Promise((resolve, reject) => {
+                            writer.on('finish', resolve);
+                            writer.on('error', reject);
+                        });
+                    } catch (error) {
+                        // console.error(`下载文件失败: ${url}`, error);
+                        throw error;
+                    }
+                };
+   
+                /**
+                 * 合并音视频文件
+                 * @param {string} videoPath 视频m4s路径
+                 * @param {string} audioPath 音频m4s路径
+                 * @param {string} outputPath 输出文件路径
+                 * @returns 视频文件路径
+                 */
+                function mergeM4S(videoPath, audioPath, outputPath) {
+                    return new Promise((resolve, reject) => {
+                        // FFmpeg 合并命令
+                        const args = [
+                            '-i', videoPath,
+                            '-i', audioPath,
+                            '-c:v', 'copy',
+                            '-c:a', 'copy',
+                            '-f', 'mp4',
+                            outputPath,
+                            '-loglevel', 'quiet',
+                            '-fflags', '+genpts',
+                            '-avoid_negative_ts', 'make_zero',
+                            '-itsoffset', '0.0',
+                            '-map', '0:v:0',
+                            '-map', '1:a:0'
+                        ];
+                        const ffmpegPath = getFfmpegPath();
+                        // 运行命令 调用 FFmpeg
+                        execFile(ffmpegPath, args, (error, stdout, stderr) => {
+                            if (error) {
+                                reject('合并音视频文件失败，', error);
+                                return;
+                            };
+                            resolve(outputPath);
+                        });
+                    });
+                };
+    
+                // 主逻辑：下载并合并视频和音频
+                async function downloadAndMerge(videoUrl, audioUrl, outputFileName) {
+                    try {
+                        const tempDir = getDownloadDir();
+                        if (!fs.existsSync(tempDir)) {
+                            fs.mkdirSync(tempDir);
+                        };
+                        const videoPath = path.join(tempDir, 'video.m4s');
+                        const audioPath = path.join(tempDir, 'audio.m4s');
+                        const outputPath = path.join(tempDir, outputFileName);
+                        // 下载视频和音频文件
+                        await downloadFile(videoUrl, videoPath);
+                        await downloadFile(audioUrl, audioPath);
+                        // 合并音视频
+                        const resultPath = await mergeM4S(videoPath, audioPath, outputPath);
+
+                        // 删除临时文件
+                        fs.unlinkSync(videoPath);
+                        fs.unlinkSync(audioPath);
+                        return resultPath;
+                    } catch (error) {
+                        console.error('下载或合并失败');
+                        throw error;
+                    };
+                };
+                // 示例调用
+                const timestamp = new Date().getTime();
+                const outputFileName = `${timestamp}-output.mp4`;
+                
+                const outputPath = await downloadAndMerge(videoUrl, audioUrl, outputFileName)
+                return outputPath;
+            } catch(error) {
+                throw new Error('下载视频失败，' + error.message);
+            };
+        });
+        ipcMain.handle('subtitle_video', async (_event, data) => {
+            const { bvid = '', cid = '', sessdata = '', videoId = 32, audioId = 30216, windowId = '' } = data;
+            if(!bvid || !cid) {
+                return;
+            };
+            if(!checkPlayerWindowExist(windowId)) {
+                return;
+            };
+            const URL_HOME_VIDEO_PLAYER = 'https://api.bilibili.com/x/player/wbi/playurl';
+            const response = await axios({
+                url: URL_HOME_VIDEO_PLAYER,
+                method: 'GET',
+                headers: {
+                    "Cookie": sessdata ? `SESSDATA=${sessdata}` : '',
+                    'Referer': 'https://www.bilibili.com/',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Origin': 'https://www.bilibili.com'
+                },
+                params: {
+                    bvid,
+                    cid,
+                    fnval: 16
+                }
+            });
+            const result = response.data;
+            const audioOptions = result.data.dash.audio;
+            const audioUrl = audioOptions.filter(audio => audio.id === audioId)[0].baseUrl || '';
+
+            /**
+             * 转换m4s为mp3
+             * @param {String} inputFile 
+             * @param {String} outputFile 
+             * @returns 
+             */
+            function convertM4sToMp3(inputFile, outputFile) {
+                return new Promise((resolve, reject) => {
+                    const args = [
+                        '-i', inputFile,     // 输入 m4s 文件
+                        '-y',                // 覆盖输出
+                        '-vn',               // 去掉视频流（只保留音频）
+                        '-acodec', 'libmp3lame',
+                        '-ab', '192k',
+                        outputFile
+                    ];
+                    const ffmpegPath = getFfmpegPath();
+                    execFile(ffmpegPath, args, (error, stdout, stderr) => {
+                        if (error) {
+                            reject('ffmpeg 错误: ' + error.message);
+                            return;
+                        };
+                        resolve(outputFile);
+                    });
+                });
+            };
+
+            /**
+             * 生成字幕文件
+             * @param {string} audioPath 音频文件路径 
+             * @param {string} subtitleFolderName 字幕文件夹名称
+             * @param {string} fileName 文件名
+             * @returns {Promise<{ resultPath: string, content: string }>} 
+             */
+            function generateSubtitleFromAudio(audioPath, subtitleFolderName, fileName) {
+                let frontPath;
+                if(app.isPackaged) {
+                    frontPath = path.join(process.resourcesPath, 'extraResources');
+                } else {
+                    frontPath = process.cwd();
+                };
+                const whisperExe = path.join(frontPath, 'model', 'whisper-cli.exe');
+                const modelFile = path.join(frontPath, 'model', 'ggml-tiny.bin');
+
+                // return new Promise((resolve, reject) => {
+                //     const args = [
+                //         audioPath,
+                //         '--model', modelFile,
+                //         '--language', 'zh',
+                //         '--output-srt'
+                //     ];
+
+                //     execFile(whisperExe, args, (error, stdout, stderr) => {
+                //         if (error) {
+                //             reject(error);
+                //             return;
+                //         };
+                //         const tempDir = getDownloadDir();
+                //         const baseFolderPath = path.join(tempDir, subtitleFolderName);
+                //         if(!fs.existsSync(baseFolderPath)) {
+                //             fs.mkdirSync(baseFolderPath);
+                //         };
+                //         const resultPath = path.join(baseFolderPath, fileName + '.srt');
+                //         fs.rename(path.join(audioPath + '.srt'), resultPath, (err) => {
+                //             if (err) {
+                //                 reject('字幕文件移动失败', err);
+                //                 return;
+                //             };
+                //             resolve(resultPath);
+                //         });
+                //     });
+                // });
+                return new Promise((resolve, reject) => {
+                    const args = [
+                        audioPath,
+                        '--model', modelFile,
+                        '--language', 'zh',
+                        '--output-srt'
+                    ];
+                    let whisper = null;
+                    try {
+                        whisper = spawn(whisperExe, args);
+                    } catch (error) {
+                        reject(new Error('启动 whisper 失败，' + error.message));
+                        return;
+                    }
+                    let subtitle = '';
+                    let errorMessage = '';
+                    whisper.stdout.on('data', (data) => {
+                        // whisper.cpp 的识别结果流式输出在这里
+                        subtitle += data.toString();
+                    });
+
+                    whisper.stderr.on('data', (data) => {
+                        // whisper.cpp 的日志信息（进度、推理细节等）
+                        errorMessage += data.toString();
+                    });
+
+                    whisper.on('close', (code) => {
+                        if (code !== 0) {
+                            reject(new Error(`whisper exited with code ${code}`));
+                            return;
+                        };
+                        // 如果存在字幕文件
+                        const subtitleFilePath = path.join(audioPath + '.srt');
+                        if(fs.existsSync(subtitleFilePath)) {
+                            const tempDir = getDownloadDir();
+                            const baseFolderPath = path.join(tempDir, subtitleFolderName);
+                            if (!fs.existsSync(baseFolderPath)) {
+                                fs.mkdirSync(baseFolderPath);
+                            };
+                            const resultPath = path.join(baseFolderPath, fileName + '.srt');
+                            fs.rename(subtitleFilePath, resultPath, (err) => {
+                                if (err) {
+                                    reject(new Error('字幕文件移动失败: ' + err.message));
+                                    return;
+                                };
+                                resolve({ resultPath, content: subtitle });
+                            });
+                        } else {
+                            resolve({ resultPath: '', content: subtitle });
+                        };
+                    });
+
+                    whisper.on('error', (error) => {
+                        reject(new Error('whisper 进程错误，' + error.message));
+                    });
+                });
+            };
+
+            /**
+             * 主逻辑：下载音频并生成字幕
+             * @param {string} audioUrl 音频URL
+             * @param {string} outputFileName 输出文件名
+             * @returns {Promise<string>} 生成的字幕内容
+             */
+            async function downloadAndGenerateSubtitle(audioUrl, outputFileName) {
+                let audioPath = '';
+                let resultAudioPath = '';
+                try {
+                    const tempDir = getDownloadDir();
+                    if (!fs.existsSync(tempDir)) {
+                        fs.mkdirSync(tempDir);
+                    };
+                    audioPath = path.join(tempDir, 'audio.m4s');
+                    await downloadFile(audioUrl, audioPath);
+                    resultAudioPath = await convertM4sToMp3(audioPath, path.join(tempDir, outputFileName));
+                    fs.unlinkSync(audioPath);
+                    const { content } = await generateSubtitleFromAudio(resultAudioPath, 'subtitles', outputFileName.replace('.mp3', ''));
+                    fs.unlinkSync(resultAudioPath);
+                    return content;
+                } catch (error) {
+                    throw error;
+                } finally {
+                    // 清理临时文件
+                    if (fs.existsSync(audioPath)) {
+                        fs.unlinkSync(audioPath);
+                    };
+                    if (fs.existsSync(resultAudioPath)) {
+                        fs.unlinkSync(resultAudioPath);
+                    };
+                };
+            };
+            const timestamp = new Date().getTime();
+            const outputFileName = `${timestamp}-output.mp3`;
+            try {
+                const content = await downloadAndGenerateSubtitle(audioUrl, outputFileName)
+                return content;
+            } catch (error) {
+                throw new Error('生成字幕失败，' + error.message);
+            };
         });
     }
 };

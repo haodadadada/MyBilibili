@@ -1,12 +1,16 @@
 <template>
-    <div class="custom-alert" ref="messageBoxRef">
+    <div 
+        class="custom-alert" 
+        ref="messageBoxRef"
+        :style="{ '--duration': props.duration && typeof props.duration === 'number' ? props.duration + 'ms' : '1s' }"
+    >
         <span>{{ props.message }}</span>
     </div>
 </template>
 
 <script setup lang="ts">
     import { ref, nextTick, onMounted } from 'vue';
-    const props = defineProps(['message']);
+    const props = defineProps(['message', 'duration']);
     let messageBoxRef = ref<HTMLElement | null>(null);
     let close: (() => void) | null = null;
     onMounted(async () => {
@@ -53,7 +57,7 @@
         border-radius: 5px;
         text-align: left;
         z-index: 1000;
-        animation: slideUpFade 1s ease forwards;
+        animation: slideUpFade var(--duration, 1s) ease forwards;
         min-width: 50px;
         max-width: 300px;
     }

@@ -3,9 +3,19 @@
         <Navbar :windowMode="windowMode" @updateWindowMode="updateSelectedWindowMode"></Navbar>
         <div class="flex-between">
             <div class="flex-1 player">
-                <Player :windowMode="windowMode" @updatePanelState="updatePanelState"></Player>
+                <Player 
+                    ref="playerRef"
+                    :windowMode="windowMode" 
+                    @updatePanelState="updatePanelState"
+                ></Player>
             </div>
-            <Panel :reply="reply" v-show="isShowPanel && !isSmallWindow" class="panel"></Panel>
+            <Panel 
+                v-show="isShowPanel && !isSmallWindow" 
+                :reply="reply"
+                @downloadVideo="handleClickDownloadBtn"
+                @generateSummarize="handleClickSummaryBtn"
+                class="panel"
+            ></Panel>
         </div>
     </div>
 </template>
@@ -186,6 +196,16 @@
             window.resizeTo(normalWindowWidth, normalWindowHeight);
         };
     };
+
+    // 控制面板组件调用播放器组件的方法
+    const playerRef = ref();
+    const handleClickDownloadBtn = () => {
+        playerRef.value.downloadVideo();
+    };
+    const handleClickSummaryBtn = () => {
+        playerRef.value.generateSummarize();
+    };
+
     onMounted(async () => {
         watchLoginStateUpdate();
         await initSystemConfiguration();
